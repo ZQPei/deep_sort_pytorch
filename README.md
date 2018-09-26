@@ -43,7 +43,7 @@ To train the model, first you need download [Market1501](http://www.liangzheng.o
 Then you can try [train.py](deep/train.py) to train your own parameter and evaluate it using [test.py](deep/test.py) and [evaluate.py](deep/evalute.py).
 ![train.jpg](deep/train.jpg)
 
-## Demo images
+## Demo video
 [demo.avi](https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6)
 
 ## References
