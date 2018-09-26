@@ -27,7 +27,6 @@ class Detector(object):
             h = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
             self.output = cv2.VideoWriter("demo.avi", fourcc, 20, (w,h))
-            import ipdb; ipdb.set_trace()
         return self.vdo.isOpened()
         
     def detect(self):
