@@ -29,7 +29,7 @@ cd deep/checkpoint
 # download ckpt.t7 from 
 https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6 to this folder
 cd ../../
-```
+```  
 4. Run demo
 ```
 python demo_yolo3_deepsort.py [YOUR_VIDEO_PATH]
@@ -49,6 +49,10 @@ Then you can try [train.py](deep/train.py) to train your own parameter and evalu
 
 ![1.jpg](images/1.jpg)
 ![2.jpg](images/2.jpg)
+
+All files can also be accessed by BaiduDisk!  
+linker：https://pan.baidu.com/s/1TEFdef9tkJVT0Vf0DUZvrg  
+passwd：1eqo
 
 
 ## References
