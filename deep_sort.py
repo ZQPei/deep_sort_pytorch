@@ -63,7 +63,10 @@ class DeepSort(object):
             im = ori_img[y1:y2,x1:x2]
             feature = self.extractor(im)[0]
             features.append(feature)
-        features = np.stack(features, axis=0)
+        if len(features):
+            features = np.stack(features, axis=0)
+        else:
+            features = np.array([])
         return features
 
 
