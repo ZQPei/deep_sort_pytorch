@@ -11,6 +11,9 @@ However in original code, the CNN model is implemented with tensorflow, which I'
 - sklearn
 - pytorch 0.4.0
 
+## Contributor
+[cherishhh](https://github.com/cherishhh)
+
 ## Quick Start
 0. Check all dependencies installed
 
