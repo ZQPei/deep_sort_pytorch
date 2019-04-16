@@ -17,14 +17,18 @@ class YOLO3(object):
         use_cuda=True,
         is_plot=False,
         is_xywh=False,
+        half=False,
     ):
         # net definition
+        self.half = half
         self.net = Darknet(cfgfile)
         self.net.load_weights(weightfile)
         print("Loading weights from %s... Done!" % (weightfile))
         self.device = "cuda" if use_cuda else "cpu"
         self.net.eval()
         self.net.to(self.device)
+        if half:
+            self.net = self.net.half()
 
         # constants
         self.size = self.net.width, self.net.height
@@ -35,45 +39,20 @@ class YOLO3(object):
         self.is_xywh = is_xywh
         self.class_names = self.load_class_names(namesfile)
 
-    def __call__(self, ori_img):
+    def __call__(self, imgs):
         # img to tensor
-        assert isinstance(ori_img, np.ndarray), "input must be a numpy array!"
-        img = ori_img.astype(np.float) / 255.0
-        img = cv2.resize(img, self.size)
-        img = torch.from_numpy(img).float().permute(2, 0, 1).unsqueeze(0)
         # forward
         with torch.no_grad():
-            img = img.to(self.device)
-            out_boxes = self.net(img)
-            boxes = get_all_boxes(
-                out_boxes, self.conf_thresh, self.net.num_classes, self.use_cuda
-            )[0]
-            boxes = nms(boxes, self.nms_thresh)
-            # print(boxes)
-        # plot boxes
-        if self.is_plot:
-            return self.plot_bbox(ori_img, boxes)
-        if len(boxes) == 0:
-            return None, None, None
+            imgs = imgs.to(self.device)
+            batch_out_boxes = self.net(imgs)
+            batch_boxes = get_all_boxes(
+                batch_out_boxes, self.conf_thresh, self.net.num_classes, self.use_cuda
+            )
+            batch_boxes = list(
+                map(lambda boxes: nms(boxes, self.nms_thresh), batch_boxes)
+            )
 
-        height, width = ori_img.shape[:2]
-        boxes = np.vstack(boxes)
-        bbox = np.empty_like(boxes[:, :4])
-        if self.is_xywh:
-            # bbox x y w h
-            bbox[:, 0] = boxes[:, 0] * width
-            bbox[:, 1] = boxes[:, 1] * height
-            bbox[:, 2] = boxes[:, 2] * width
-            bbox[:, 3] = boxes[:, 3] * height
-        else:
-            # bbox xmin ymin xmax ymax
-            bbox[:, 0] = (boxes[:, 0] - boxes[:, 2] / 2.0) * width
-            bbox[:, 1] = (boxes[:, 1] - boxes[:, 3] / 2.0) * height
-            bbox[:, 2] = (boxes[:, 0] + boxes[:, 2] / 2.0) * width
-            bbox[:, 3] = (boxes[:, 1] + boxes[:, 3] / 2.0) * height
-        cls_conf = boxes[:, 5]
-        cls_ids = boxes[:, 6]
-        return bbox, cls_conf, cls_ids
+        return batch_boxes
 
     def load_class_names(self, namesfile):
         with open(namesfile, "r", encoding="utf8") as fp:

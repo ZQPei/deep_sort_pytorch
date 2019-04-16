@@ -42,7 +42,7 @@ class YoloLayer(nn.Module):
 
         masked_anchors = torch.FloatTensor(masked_anchors).to(self.device)
         num_anchors = torch.IntTensor([len(self.anchor_mask)]).to(self.device)
-        return {"x": output, "a": masked_anchors, "n": num_anchors}
+        return {"x": output.float(), "a": masked_anchors, "n": num_anchors}
 
     def build_targets(self, pred_boxes, target, anchors, nA, nH, nW):
         nB = target.size(0)
