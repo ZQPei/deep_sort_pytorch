@@ -19,7 +19,8 @@ def parse_args(args):
     parser.add_argument("--batch_size", "-bs", type=int, default=32)
 
     parser.add_argument("-half", action="store_true", help="FP16 inference")
-    parser.add_argument("-path", "--videos_path", type=str, default=60)
+    parser.add_argument("-path", "--videos_path", type=str)
+    parser.add_argument("-opath", "--output_path", type=str)
     return parser.parse_args(args)
 
 
@@ -31,40 +32,50 @@ class loading(StoppableThread):
         self.vdo = cv2.VideoCapture()
 
     def run(self):
-        while not self.is_opened:
-            time.sleep(1.0)
-        xmin, ymin, xmax, ymax = self.area
-        ims, ori_ims = [], []
-        while self.vdo.grab():
-            _, ori_im = self.vdo.retrieve()
-            ori_ims.append(ori_im)
-            ims.append(ori_im[ymin:ymax, xmin:xmax, (2, 1, 0)])
-            if len(ims) == self.batch_size:
-                while len(model_queue) > 5:
-                    time.sleep(0.2)
-                assert isinstance(
-                    ori_ims[0], np.ndarray
-                ), "input must be a numpy array!"
-                imgs = list(
-                    map(lambda ori_img: ori_img.astype(np.float) / 255.0, ori_ims)
-                )
-                imgs = np.array(list(map(lambda img: cv2.resize(img, self.size), imgs)))
-                imgs = torch.from_numpy(imgs).float().permute(0, 3, 1, 2)
-                if self.half:
-                    imgs = imgs.half()
+        while len(self.videos) != 0:
+            self.open()
+            xmin, ymin, xmax, ymax = self.area
+            ims, ori_ims = [], []
+            while self.vdo.grab():
+                _, ori_im = self.vdo.retrieve()
+                ori_ims.append(ori_im)
+                ims.append(ori_im[ymin:ymax, xmin:xmax, (2, 1, 0)])
+                if len(ims) == self.batch_size:
+                    while len(model_queue) > 5:
+                        time.sleep(0.2)
+                    assert isinstance(
+                        ori_ims[0], np.ndarray
+                    ), "input must be a numpy array!"
+                    imgs = list(
+                        map(lambda ori_img: ori_img.astype(np.float) / 255.0, ori_ims)
+                    )
+                    imgs = np.array(
+                        list(map(lambda img: cv2.resize(img, self.size), imgs))
+                    )
+                    imgs = torch.from_numpy(imgs).float().permute(0, 3, 1, 2)
+                    if self.half:
+                        imgs = imgs.half()
 
-                model_queue.append(
-                    [ori_ims, ims, imgs, self.area, self.im_width, self.im_height]
-                )
-                ims, ori_ims = [], []
+                    model_queue.append(
+                        [
+                            ori_ims,
+                            ims,
+                            imgs,
+                            self.area,
+                            self.im_width,
+                            self.im_height,
+                            self.video_read,
+                        ]
+                    )
+                    ims, ori_ims = [], []
 
-    def open(self, video_path):
+    def open(self):
         assert os.path.isfile(video_path), "Error: path error"
-        self.vdo.open(video_path)
+        self.video_read = self.videos.pop()
+        self.vdo.open(self.videos_path + self.video_read)
         self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.area = 0, 0, self.im_width, self.im_height
-        self.is_opened = self.vdo.isOpened()
 
 
 class Detector(StoppableThread):
@@ -94,12 +105,20 @@ class Detector(StoppableThread):
                 area,
                 self.im_width,
                 self.im_height,
+                video_read,
             ) = self.model_queue.pop(0)
+            if self.write_video and self.video_read != video_read:
+                self.output = None
+
             xmin, ymin, xmax, ymax = area
             if self.write_video and self.output is None:
+                self.video_read = videao_read
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
                 self.output = cv2.VideoWriter(
-                    "demo.avi", fourcc, 20, (self.im_width, self.im_height)
+                    self.output_path + video_read,
+                    fourcc,
+                    20,
+                    (self.im_width, self.im_height),
                 )
             batch_bbox_xywh, batch_cls_conf, batch_cls_ids = self.yolo3(imgs, ori_ims)
 
@@ -130,9 +149,14 @@ if __name__ == "__main__":
     config = parse_args(sys.argv[1:])
     batch_size = config.batch_size
     print(config)
+    videos = os.listdir(config.videos_path)
     model_queue = []
     det = threadTask(
-        Detector, model_queue=model_queue, half=config.half, batch_size=batch_size
+        Detector,
+        model_queue=model_queue,
+        half=config.half,
+        batch_size=batch_size,
+        output_path=config.output_path,
     )
     loading_thread = threadTask(
         loading,
@@ -140,8 +164,9 @@ if __name__ == "__main__":
         batch_size=batch_size,
         size=det.task.yolo3.size,
         half=config.half,
+        videos=videos,
+        videos_path=config.videos_path,
     )
-    loading_thread.task.open(config.videos_path)
 
     start = time.time()
     old_value = 0
