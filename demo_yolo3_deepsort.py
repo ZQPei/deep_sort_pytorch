@@ -11,6 +11,7 @@ from algorithmes.common.pipeline import threadTask, StoppableThread
 import configargparse
 from yolo_utils import get_all_boxes, nms, plot_boxes_cv2
 from algorithmes.common.loading import read_file_fps
+import json
 
 
 def parse_args(args):
@@ -21,8 +22,10 @@ def parse_args(args):
 
     parser.add_argument("-half", action="store_true", help="FP16 inference")
     parser.add_argument("-path", "--videos_path", type=str)
-    parser.add_argument("-opath", "--output_path", type=str)
+    parser.add_argument("-opath", "--output_path", type=str, default="")
     parser.add_argument("-ft", "--fps_target", type=float)
+    parser.add_argument("-wv", "--write_videos", type=int, default=0)
+    parser.add_argument("-wj", "--write_jsons", type=int, default=1)
     return parser.parse_args(args)
 
 
@@ -102,10 +105,11 @@ class Detector(StoppableThread):
         )
         self.deepsort = DeepSort("deep/checkpoint/ckpt.t7")
         self.class_names = self.yolo3.class_names
-        self.write_video = True
         self.output = None
         self.counter = 0
         self.video_read = ""
+        self.frame_id = 0
+        self.json = {}
 
     def run(self):
         while 1:
@@ -120,19 +124,34 @@ class Detector(StoppableThread):
                 self.im_height,
                 video_read,
             ) = self.model_queue.pop(0)
-            if self.write_video and self.video_read != video_read:
-                self.output = None
+            if self.video_read != video_read:
+                print("finished processing", self.video_read)
+                self.video_read = video_read
+                self.frame_id = 0
+                self.deepsort = DeepSort("deep/checkpoint/ckpt.t7")
+                if self.output is not None:
+                    self.output.release()
+                    self.output = None
+                if self.json != {}:
+                    print("writing json from", self.video_read)
+                    with open(
+                        self.output_path
+                        + "/"
+                        + self.video_read.split(".")[0]
+                        + ".json",
+                        "w",
+                    ) as fp:
+                        json.dump(self.json, fp)
+                    self.json = {}
 
             xmin, ymin, xmax, ymax = area
-            if self.write_video and self.output is None:
-                self.video_read = video_read
-                self.deepsort = DeepSort("deep/checkpoint/ckpt.t7")
+            if self.write_videos and self.output is None:
                 print("writing", self.video_read)
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
                 self.output = cv2.VideoWriter(
                     self.output_path + video_read,
                     fourcc,
-                    20,
+                    self.fps_target,
                     (self.im_width, self.im_height),
                 )
             batch_bbox_xywh, batch_cls_conf, batch_cls_ids = self.yolo3(imgs, ori_ims)
@@ -150,11 +169,26 @@ class Detector(StoppableThread):
                     if len(outputs) > 0:
                         bbox_xyxy = outputs[:, :4]
                         identities = outputs[:, -1]
-                        ori_ims[i] = draw_bboxes(
-                            ori_ims[i], bbox_xyxy, identities, offset=(xmin, ymin)
-                        )
-                if self.write_video:
+                        if self.write_videos:
+                            ori_ims[i] = draw_bboxes(
+                                ori_ims[i], bbox_xyxy, identities, offset=(xmin, ymin)
+                            )
+
+                        if self.write_jsons:
+                            for i, box in enumerate(bbox_xyxy):
+                                track_id = int(identities[i])
+                                # x1, y1, x2, y2 = box
+                                box[0] += xmin
+                                box[2] += xmin
+                                box[1] += ymin
+                                box[3] += ymin
+                                if track_id not in self.json.keys():
+                                    self.json[track_id] = {}
+                                self.json[track_id][self.frame_id] = {}
+                                self.json[track_id][self.frame_id]["box"] = box.tolist()
+                if self.write_videos:
                     self.output.write(ori_ims[i])
+                self.frame_id += 1
             self.counter += self.batch_size
 
 
@@ -172,6 +206,8 @@ if __name__ == "__main__":
         half=config.half,
         batch_size=batch_size,
         output_path=config.output_path,
+        write_videos=config.write_videos,
+        write_jsons=config.write_jsons,
     )
     loading_thread = threadTask(
         loading,
