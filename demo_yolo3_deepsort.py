@@ -34,6 +34,7 @@ class loading(StoppableThread):
     def run(self):
         while len(self.videos) != 0:
             self.open()
+            print("loading", self.video_read)
             xmin, ymin, xmax, ymax = self.area
             ims, ori_ims = [], []
             while self.vdo.grab():
@@ -114,6 +115,7 @@ class Detector(StoppableThread):
             xmin, ymin, xmax, ymax = area
             if self.write_video and self.output is None:
                 self.video_read = video_read
+                print("writing", self.video_read)
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
                 self.output = cv2.VideoWriter(
                     self.output_path + video_read,
