@@ -10,6 +10,7 @@ import time
 from algorithmes.common.pipeline import threadTask, StoppableThread
 import configargparse
 from yolo_utils import get_all_boxes, nms, plot_boxes_cv2
+from algorithmes.common.loading import read_file_fps
 
 
 def parse_args(args):
@@ -21,6 +22,7 @@ def parse_args(args):
     parser.add_argument("-half", action="store_true", help="FP16 inference")
     parser.add_argument("-path", "--videos_path", type=str)
     parser.add_argument("-opath", "--output_path", type=str)
+    parser.add_argument("-ft", "--fps_target", type=float)
     return parser.parse_args(args)
 
 
@@ -34,46 +36,55 @@ class loading(StoppableThread):
     def run(self):
         while len(self.videos) != 0:
             self.open()
-            print("loading", self.video_read)
+            self.count = 0
+            print("loading", self.video_read, "with", self.fps_origin, "fps")
             xmin, ymin, xmax, ymax = self.area
             ims, ori_ims = [], []
             while self.vdo.grab():
                 _, ori_im = self.vdo.retrieve()
-                ori_ims.append(ori_im)
-                ims.append(ori_im[ymin:ymax, xmin:xmax, (2, 1, 0)])
-                if len(ims) == self.batch_size:
-                    while len(model_queue) > 5:
-                        time.sleep(0.2)
-                    assert isinstance(
-                        ori_ims[0], np.ndarray
-                    ), "input must be a numpy array!"
-                    imgs = list(
-                        map(lambda ori_img: ori_img.astype(np.float) / 255.0, ori_ims)
-                    )
-                    imgs = np.array(
-                        list(map(lambda img: cv2.resize(img, self.size), imgs))
-                    )
-                    imgs = torch.from_numpy(imgs).float().permute(0, 3, 1, 2)
-                    if self.half:
-                        imgs = imgs.half()
+                self.count += 1
+                if self.count > 0:
+                    self.count -= self.skip
+                    ori_ims.append(ori_im)
+                    ims.append(ori_im[ymin:ymax, xmin:xmax, (2, 1, 0)])
+                    if len(ims) == self.batch_size:
+                        while len(model_queue) > 5:
+                            time.sleep(0.2)
+                        assert isinstance(
+                            ori_ims[0], np.ndarray
+                        ), "input must be a numpy array!"
+                        imgs = list(
+                            map(
+                                lambda ori_img: ori_img.astype(np.float) / 255.0,
+                                ori_ims,
+                            )
+                        )
+                        imgs = np.array(
+                            list(map(lambda img: cv2.resize(img, self.size), imgs))
+                        )
+                        imgs = torch.from_numpy(imgs).float().permute(0, 3, 1, 2)
+                        if self.half:
+                            imgs = imgs.half()
 
-                    model_queue.append(
-                        [
-                            ori_ims,
-                            ims,
-                            imgs,
-                            self.area,
-                            self.im_width,
-                            self.im_height,
-                            self.video_read,
-                        ]
-                    )
-                    ims, ori_ims = [], []
+                        model_queue.append(
+                            [
+                                ori_ims,
+                                ims,
+                                imgs,
+                                self.area,
+                                self.im_width,
+                                self.im_height,
+                                self.video_read,
+                            ]
+                        )
+                        ims, ori_ims = [], []
 
     def open(self):
         self.video_read = self.videos.pop()
         assert os.path.isfile(self.videos_path + self.video_read), "Error: path error"
         self.vdo.open(self.videos_path + self.video_read)
+        self.fps_origin = read_file_fps(self.videos_path + self.video_read)
+        self.skip = self.fps_origin / self.fps_target
         self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.area = 0, 0, self.im_width, self.im_height
@@ -169,6 +180,7 @@ if __name__ == "__main__":
         half=config.half,
         videos=videos,
         videos_path=config.videos_path,
+        fps_target=config.fps_target,
     )
 
     start = time.time()
