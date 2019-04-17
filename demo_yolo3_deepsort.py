@@ -70,8 +70,8 @@ class loading(StoppableThread):
                     ims, ori_ims = [], []
 
     def open(self):
-        assert os.path.isfile(video_path), "Error: path error"
         self.video_read = self.videos.pop()
+        assert os.path.isfile(self.videos_path + self.video_read), "Error: path error"
         self.vdo.open(self.videos_path + self.video_read)
         self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -93,6 +93,7 @@ class Detector(StoppableThread):
         self.write_video = True
         self.output = None
         self.counter = 0
+        self.video_read = ""
 
     def run(self):
         while 1:
@@ -112,7 +113,7 @@ class Detector(StoppableThread):
 
             xmin, ymin, xmax, ymax = area
             if self.write_video and self.output is None:
-                self.video_read = videao_read
+                self.video_read = video_read
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
                 self.output = cv2.VideoWriter(
                     self.output_path + video_read,
