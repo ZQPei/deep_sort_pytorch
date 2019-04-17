@@ -39,7 +39,7 @@ class YOLO3(object):
         self.is_xywh = is_xywh
         self.class_names = self.load_class_names(namesfile)
 
-    def __call__(self, imgs):
+    def __call__(self, imgs, ori_ims):
         # img to tensor
         # forward
         with torch.no_grad():
@@ -51,8 +51,39 @@ class YOLO3(object):
             batch_boxes = list(
                 map(lambda boxes: nms(boxes, self.nms_thresh), batch_boxes)
             )
+        # plot boxes
+        if self.is_plot:
+            return [
+                self.plot_bbox(ori_ims[i], batch_boxes[i]) for i in range(len(ori_ims))
+            ]
 
-        return batch_boxes
+        height, width = ori_ims[-1].shape[:2]
+        batch_bbox, batch_cls_conf, batch_cls_ids = [], [], []
+        for boxes in batch_boxes:
+            if len(boxes) == 0:
+                batch_bbox.append(None)
+                batch_cls_conf.append(None)
+                batch_cls_ids.append(None)
+                continue
+
+            boxes = np.vstack(boxes)
+            bbox = np.empty_like(boxes[:, :4])
+            if self.is_xywh:
+                # bbox x y w h
+                bbox[:, 0] = boxes[:, 0] * width
+                bbox[:, 1] = boxes[:, 1] * height
+                bbox[:, 2] = boxes[:, 2] * width
+                bbox[:, 3] = boxes[:, 3] * height
+            else:
+                # bbox xmin ymin xmax ymax
+                bbox[:, 0] = (boxes[:, 0] - boxes[:, 2] / 2.0) * width
+                bbox[:, 1] = (boxes[:, 1] - boxes[:, 3] / 2.0) * height
+                bbox[:, 2] = (boxes[:, 0] + boxes[:, 2] / 2.0) * width
+                bbox[:, 3] = (boxes[:, 1] + boxes[:, 3] / 2.0) * height
+            batch_bbox.append(bbox)
+            batch_cls_conf.append(boxes[:, 5])
+            batch_cls_ids.append(boxes[:, 6])
+        return batch_bbox, batch_cls_conf, batch_cls_ids
 
     def load_class_names(self, namesfile):
         with open(namesfile, "r", encoding="utf8") as fp:
@@ -85,6 +116,54 @@ class YOLO3(object):
             )
             img = cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
         return img
+
+    def load_class_names(self, namesfile):
+        with open(namesfile, "r", encoding="utf8") as fp:
+            class_names = [line.strip() for line in fp.readlines()]
+        return class_names
+
+    def run(self):
+        while 1:
+            while len(self.postprocessing_queue) == 0:
+                time.sleep(0.2)
+            (
+                batch_boxes,
+                ims,
+                ori_ims,
+                area,
+                self.im_width,
+                self.im_height,
+            ) = postprocessing_queue.pop(0)
+            batch_bbox_xywh, batch_cls_conf, batch_cls_ids = self.postprocess(
+                batch_boxes, ori_ims
+            )
+
+            xmin, ymin, xmax, ymax = area
+            if self.write_video and self.output is None:
+                fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+                self.output = cv2.VideoWriter(
+                    "demo.avi", fourcc, 2.5, (self.im_width, self.im_height)
+                )
+
+            assert len(batch_bbox_xywh) == self.batch_size
+            for i, (bbox_xywh, cls_conf, cls_ids) in enumerate(
+                zip(batch_bbox_xywh, batch_cls_conf, batch_cls_ids)
+            ):
+                if bbox_xywh is not None:
+                    mask = cls_ids == 0
+                    bbox_xywh = bbox_xywh[mask]
+                    bbox_xywh[:, 3] *= 1.2
+                    cls_conf = cls_conf[mask]
+                    outputs = self.deepsort.update(bbox_xywh, cls_conf, ims[i])
+                    if len(outputs) > 0:
+                        bbox_xyxy = outputs[:, :4]
+                        identities = outputs[:, -1]
+                        ori_ims[i] = draw_bboxes(
+                            ori_ims[i], bbox_xyxy, identities, offset=(xmin, ymin)
+                        )
+                if self.write_video:
+                    self.output.write(ori_ims[i])
+            self.counter += self.batch_size
 
 
 if __name__ == "__main__":
