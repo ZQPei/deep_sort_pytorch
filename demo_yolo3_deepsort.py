@@ -126,6 +126,7 @@ class Detector(StoppableThread):
             xmin, ymin, xmax, ymax = area
             if self.write_video and self.output is None:
                 self.video_read = video_read
+                self.deepsort = DeepSort("deep/checkpoint/ckpt.t7")
                 print("writing", self.video_read)
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
                 self.output = cv2.VideoWriter(
