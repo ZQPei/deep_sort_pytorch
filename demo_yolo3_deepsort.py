@@ -51,8 +51,8 @@ class Detector(object):
             end = time.time()
             print("time: {}s, fps: {}".format(end-start, 1/(end-start)))
 
-            cv2.imshow("test", ori_im)
-            cv2.waitKey(1)
+            # cv2.imshow("test", ori_im)
+            # cv2.waitKey(1)
 
             if self.write_video:
                 self.output.write(ori_im)
