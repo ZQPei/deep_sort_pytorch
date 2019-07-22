@@ -30,7 +30,7 @@ class YOLOv3(object):
         # img to tensor
         assert isinstance(ori_img, np.ndarray), "input must be a numpy array!"
         img = ori_img.astype(np.float)/255.
-        import ipdb; ipdb.set_trace()
+
         img = cv2.resize(img, self.size)
         img = torch.from_numpy(img).float().permute(2,0,1).unsqueeze(0)
         # forward

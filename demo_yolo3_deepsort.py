@@ -43,7 +43,8 @@ class Detector(object):
         while self.vdo.grab(): 
             start = time.time()
             _, ori_im = self.vdo.retrieve()
-            im = ori_im.transpose(2,0,1)
+            im = cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB)
+            im = ori_im
             bbox_xywh, cls_conf, cls_ids = self.yolo3(im)
             if bbox_xywh is not None:
                 mask = cls_ids==0
