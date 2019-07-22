@@ -11,13 +11,13 @@ __all__ = ['DeepSort']
 
 
 class DeepSort(object):
-    def __init__(self, model_path):
+    def __init__(self, model_path, max_dist=0.2):
         self.min_confidence = 0.3
         self.nms_max_overlap = 1.0
 
         self.extractor = Extractor(model_path, use_cuda=True)
 
-        max_cosine_distance = 0.2
+        max_cosine_distance = max_dist
         nn_budget = 100
         metric = NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
         self.tracker = Tracker(metric)
