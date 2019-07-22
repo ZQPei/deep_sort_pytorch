@@ -16,25 +16,27 @@ class Detector(object):
         # cv2.resizeWindow("test", args.width, args.height)
         self.vdo = cv2.VideoCapture()
         self.yolo3 = YOLOv3(args.yolo_cfg, args.yolo_weights, args.yolo_names, is_xywh=True)
-        self.deepsort = DeepSort(args.deep_sort_checkpoint)
+        self.deepsort = DeepSort(args.deepsort_checkpoint)
         self.class_names = self.yolo3.class_names
 
-        assert self.init()
 
-
-    def init(self):
+    def __enter__(self):
         assert os.path.isfile(self.args.VIDEO_PATH), "Error: path error"
         self.vdo.open(self.args.VIDEO_PATH)
         self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        print("sasa")
         if self.args.save_path:
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
             self.output = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
 
-        print("abab")
-        return self.vdo.isOpened()
+        assert self.vdo.isOpened()
+
+        return self
+
+    
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        print(exc_type, exc_value, exc_traceback)
         
 
     def detect(self):
@@ -72,7 +74,7 @@ def parse_args():
     parser.add_argument("--yolo_cfg", type=str, default="YOLOv3/cfg/yolo_v3.cfg")
     parser.add_argument("--yolo_weights", type=str, default="YOLOv3/yolov3.weights")
     parser.add_argument("--yolo_names", type=str, default="YOLOv3/cfg/coco.names")
-    parser.add_argument("--deep_sort_checkpoint", type=str, default="deep_sort/deep/checkpoint/ckpt.t7")
+    parser.add_argument("--deepsort_checkpoint", type=str, default="deep_sort/deep/checkpoint/ckpt.t7")
     parser.add_argument("--save_path", type=str, default="demo.avi")
     return parser.parse_args()
 
