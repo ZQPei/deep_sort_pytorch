@@ -9,21 +9,30 @@ However in original code, the CNN model is implemented with tensorflow, which I'
 - numpy
 - cv2
 - sklearn
-- pytorch 0.4.0
+- pytorch 0.4.0 or 1.0.0 or 1.1.0
 
 ## Quick Start
 0. Check all dependencies installed
+```bash
+pip install -r requirements.txt
+```
+for user in china, you can specify pypi source to accelerate install like:
+```bash
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple 
+```
 
 1. Clone this repository
 ```
 git clone git@github.com:ZQPei/deep_sort_pytorch.git
 ```
+
 2. Download YOLOv3 parameters
 ```
 cd YOLOv3/
 wget https://pjreddie.com/media/files/yolov3.weights
 cd ..
 ```
+
 3. Download deepsort parameters ckpt.t7
 ```
 cd deep_sort/deep/checkpoint
@@ -31,10 +40,22 @@ cd deep_sort/deep/checkpoint
 https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6 to this folder
 cd ../../../
 ```  
+
 4. Run demo
 ```
-python demo_yolo3_deepsort.py [YOUR_VIDEO_PATH]
+usage: demo_yolo3_deepsort.py VIDEO_PATH
+                              [-h] [--width WIDTH] [--height HEIGHT]
+                              [--yolo_cfg YOLO_CFG]
+                              [--yolo_weights YOLO_WEIGHTS]
+                              [--yolo_names YOLO_NAMES]
+                              [--deepsort_checkpoint DEEPSORT_CHECKPOINT]
+                              [--ignore_display] [--save_path SAVE_PATH]
+                              
 ```
+
+All files can also be accessed from BaiduDisk!  
+linker：https://pan.baidu.com/s/1TEFdef9tkJVT0Vf0DUZvrg  
+passwd：1eqo  
 
 ## Training the RE-ID model
 The original model used in paper is in original_model.py, and its parameter here [original_ckpt.t7](https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6).  
@@ -50,10 +71,6 @@ Then you can try [train.py](deep_sort/deep/train.py) to train your own parameter
 
 ![1.jpg](images/1.jpg)
 ![2.jpg](images/2.jpg)
-
-All files can also be accessed from BaiduDisk!  
-linker：https://pan.baidu.com/s/1TEFdef9tkJVT0Vf0DUZvrg  
-passwd：1eqo
 
 
 ## References
