@@ -32,6 +32,8 @@ class Detector(object):
         if self.args.save_path:
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
             self.output = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
+
+        print("abab")
         return self.vdo.isOpened()
         
 
