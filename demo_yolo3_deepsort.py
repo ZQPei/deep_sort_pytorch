@@ -12,13 +12,13 @@ from util import COLORS_10, draw_bboxes
 class Detector(object):
     def __init__(self, args):
         self.args = args
-        cv2.namedWindow("test", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("test", args.width, args.height)
+        # cv2.namedWindow("test", cv2.WINDOW_NORMAL)
+        # cv2.resizeWindow("test", args.width, args.height)
         self.vdo = cv2.VideoCapture()
         self.yolo3 = YOLOv3(args.yolo_cfg, args.yolo_weights, args.yolo_names, is_xywh=True)
         self.deepsort = DeepSort(args.deep_sort_checkpoint)
         self.class_names = self.yolo3.class_names
-        self.write_video = True
+
 
     def init(self):
         assert os.path.isfile(self.args.VIDEO_PATH), "Error: path error"
@@ -26,11 +26,12 @@ class Detector(object):
         self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        if self.write_video:
+        if self.args.save_path:
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
             self.output = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
         return self.vdo.isOpened()
         
+
     def detect(self):
         while self.vdo.grab(): 
             start = time.time()
@@ -51,8 +52,8 @@ class Detector(object):
             end = time.time()
             print("time: {}s, fps: {}".format(end-start, 1/(end-start)))
 
-            # cv2.imshow("test", ori_im)
-            # cv2.waitKey(1)
+            cv2.imshow("test", ori_im)
+            cv2.waitKey(1)
 
             if self.write_video:
                 self.output.write(ori_im)
