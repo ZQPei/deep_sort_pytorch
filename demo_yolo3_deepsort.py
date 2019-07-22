@@ -11,7 +11,7 @@ import time
 class Detector(object):
     def __init__(self):
         self.vdo = cv2.VideoCapture()
-        self.yolo3 = YOLO3("YOLO3/cfg/yolo_v3.cfg","YOLO3/yolov3.weights","YOLO3/cfg/coco.names", is_xywh=True)
+        self.yolo3 = YOLOv3("YOLOv3/cfg/yolo_v3.cfg","YOLOv3/yolov3.weights","YOLOv3/cfg/coco.names", is_xywh=True)
         self.deepsort = DeepSort("deep/checkpoint/ckpt.t7")
         self.class_names = self.yolo3.class_names
         self.write_video = True
