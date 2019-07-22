@@ -19,7 +19,7 @@ class YOLOv3(object):
 
         # constants
         self.size = self.net.width, self.net.height
-        self.conf_thresh = 0.5
+        self.conf_thresh = 0.3
         self.nms_thresh = 0.4
         self.use_cuda = use_cuda
         self.is_plot = is_plot
