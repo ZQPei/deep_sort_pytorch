@@ -53,7 +53,7 @@ class Detector(object):
                 mask = cls_ids==0
 
                 bbox_xcycwh = bbox_xcycwh[mask]
-                # bbox_xcycwh[:,3:] *= 1.1
+                bbox_xcycwh[:,3:] *= 1.1
 
                 cls_conf = cls_conf[mask]
                 outputs = self.deepsort.update(bbox_xcycwh, cls_conf, im)
