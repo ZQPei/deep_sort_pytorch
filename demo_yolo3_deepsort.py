@@ -47,13 +47,16 @@ class Detector(object):
             _, ori_im = self.vdo.retrieve()
             im = cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB)
             im = ori_im
-            bbox_xywh, cls_conf, cls_ids = self.yolo3(im)
+            bbox_xcycwh, cls_conf, cls_ids = self.yolo3(im)
             if bbox_xywh is not None:
+                # select class person
                 mask = cls_ids==0
-                bbox_xywh = bbox_xywh[mask]
-                bbox_xywh[:,3] *= 1.2
+                import ipdb; ipdb.set_trace()
+                bbox_xcycwh = bbox_xcycwh[mask]
+                # bbox_xywh[:,3] *= 1.2
+
                 cls_conf = cls_conf[mask]
-                outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
+                outputs = self.deepsort.update(bbox_xcycwh, cls_conf, im)
                 if len(outputs) > 0:
                     bbox_xyxy = outputs[:,:4]
                     identities = outputs[:,-1]
