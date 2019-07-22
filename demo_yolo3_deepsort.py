@@ -51,7 +51,7 @@ class Detector(object):
             if bbox_xcycwh is not None:
                 # select class person
                 mask = cls_ids==0
-                import ipdb; ipdb.set_trace()
+
                 bbox_xcycwh = bbox_xcycwh[mask]
                 # bbox_xywh[:,3] *= 1.2
 
