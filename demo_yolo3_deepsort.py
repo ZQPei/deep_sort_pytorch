@@ -79,7 +79,7 @@ def parse_args():
     parser.add_argument("--yolo_weights", type=str, default="YOLOv3/yolov3.weights")
     parser.add_argument("--yolo_names", type=str, default="YOLOv3/cfg/coco.names")
     parser.add_argument("--deepsort_checkpoint", type=str, default="deep_sort/deep/checkpoint/ckpt.t7")
-    parser.add_argument("--ignore_display", dst="display", action="store_false")
+    parser.add_argument("--ignore_display", dest="display", action="store_false")
     parser.add_argument("--save_path", type=str, default="demo.avi")
     return parser.parse_args()
 
