@@ -26,7 +26,8 @@ class DeepSort(object):
         self.height, self.width = ori_img.shape[:2]
         # generate detections
         features = self._get_features(bbox_xywh, ori_img)
-        detections = [Detection(bbox_xywh[i], conf, features[i]) for i,conf in enumerate(confidences) if conf>self.min_confidence]
+        bbox_tlwh = self._xywh_to_tlwh(bbox_xywh)
+        detections = [Detection(bbox_tlwh[i], conf, features[i]) for i,conf in enumerate(confidences) if conf>self.min_confidence]
 
         # run on non-maximum supression
         boxes = np.array([d.tlwh for d in detections])
@@ -51,7 +52,17 @@ class DeepSort(object):
             outputs = np.stack(outputs,axis=0)
         return outputs
 
-    # def _
+
+    @staticmethod
+    def _xywh_to_tlwh(bbox_xywh):
+        """
+            convert bbox from xc_yc_w_h to xtl_ytl_w_h
+            Thanks JieChen91@github.com for reporting this bug!
+        """
+        bbox_xywh[:,0] = bbox_xywh[:,0] - bbox_xywh[:,2]/2.
+        bbox_xywh[:,1] = bbox_xywh[:,1] - bbox_xywh[:,3]/2.
+        return bbox_xywh
+
 
     def _xywh_to_xyxy(self, bbox_xywh):
         x,y,w,h = bbox_xywh
