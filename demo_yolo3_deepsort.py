@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 
-from YOLOv3 import YOLO3
+from YOLOv3 import YOLOv3
 from deep_sort import DeepSort
 from util import COLORS_10, draw_bboxes
 
