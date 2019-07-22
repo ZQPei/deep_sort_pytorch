@@ -45,7 +45,7 @@ class DeepSort(object):
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue
             box = track.to_tlwh()
-            x1,y1,x2,y2 = self._xywh_to_xyxy(box)
+            x1,y1,x2,y2 = self._tlwh_to_xyxy(box)
             track_id = track.track_id
             outputs.append(np.array([x1,y1,x2,y2,track_id], dtype=np.int))
         if len(outputs) > 0:
@@ -53,12 +53,13 @@ class DeepSort(object):
         return outputs
 
 
+    """
+    TODO:
+        Convert bbox from xc_yc_w_h to xtl_ytl_w_h
+    Thanks JieChen91@github.com for reporting this bug!
+    """
     @staticmethod
     def _xywh_to_tlwh(bbox_xywh):
-        """
-            convert bbox from xc_yc_w_h to xtl_ytl_w_h
-            Thanks JieChen91@github.com for reporting this bug!
-        """
         bbox_xywh[:,0] = bbox_xywh[:,0] - bbox_xywh[:,2]/2.
         bbox_xywh[:,1] = bbox_xywh[:,1] - bbox_xywh[:,3]/2.
         return bbox_xywh
@@ -70,6 +71,14 @@ class DeepSort(object):
         x2 = min(int(x+w/2),self.width-1)
         y1 = max(int(y-h/2),0)
         y2 = min(int(y+h/2),self.height-1)
+        return x1,y1,x2,y2
+
+    def _tlwh_to_xyxy(self, bbox_tlwh):
+        x,y,w,h = bbox_tlwh
+        x1 = max(int(x),0)
+        x2 = min(int(x+w),self.width-1)
+        y1 = max(int(y),0)
+        y2 = min(int(y+h),self.height-1)
         return x1,y1,x2,y2
     
     def _get_features(self, bbox_xywh, ori_img):
