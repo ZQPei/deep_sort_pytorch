@@ -12,8 +12,9 @@ from util import COLORS_10, draw_bboxes
 class Detector(object):
     def __init__(self, args):
         self.args = args
-        # cv2.namedWindow("test", cv2.WINDOW_NORMAL)
-        # cv2.resizeWindow("test", args.width, args.height)
+        cv2.namedWindow("test", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("test", args.width, args.height)
+        
         self.vdo = cv2.VideoCapture()
         self.yolo3 = YOLOv3(args.yolo_cfg, args.yolo_weights, args.yolo_names, is_xywh=True)
         self.deepsort = DeepSort(args.deepsort_checkpoint)
@@ -63,7 +64,7 @@ class Detector(object):
             cv2.imshow("test", ori_im)
             cv2.waitKey(1)
 
-            if self.write_video:
+            if self.args.save_path:
                 self.output.write(ori_im)
             
 
