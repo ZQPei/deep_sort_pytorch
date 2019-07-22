@@ -3,3 +3,4 @@ pillow
 torch
 torchvision
 opencv-python
+sklearn
