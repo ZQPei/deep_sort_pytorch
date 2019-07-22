@@ -12,9 +12,10 @@ from util import COLORS_10, draw_bboxes
 class Detector(object):
     def __init__(self, args):
         self.args = args
-        cv2.namedWindow("test", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("test", args.width, args.height)
-        
+        if args.display:
+            cv2.namedWindow("test", cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("test", args.width, args.height)
+
         self.vdo = cv2.VideoCapture()
         self.yolo3 = YOLOv3(args.yolo_cfg, args.yolo_weights, args.yolo_names, is_xywh=True)
         self.deepsort = DeepSort(args.deepsort_checkpoint)
@@ -32,12 +33,12 @@ class Detector(object):
             self.output = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
 
         assert self.vdo.isOpened()
-
         return self
 
     
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        print(exc_type, exc_value, exc_traceback)
+        if exc_type:
+            print(exc_type, exc_value, exc_traceback)
         
 
     def detect(self):
@@ -61,8 +62,9 @@ class Detector(object):
             end = time.time()
             print("time: {}s, fps: {}".format(end-start, 1/(end-start)))
 
-            cv2.imshow("test", ori_im)
-            cv2.waitKey(1)
+            if self.args.display:
+                cv2.imshow("test", ori_im)
+                cv2.waitKey(1)
 
             if self.args.save_path:
                 self.output.write(ori_im)
@@ -77,6 +79,7 @@ def parse_args():
     parser.add_argument("--yolo_weights", type=str, default="YOLOv3/yolov3.weights")
     parser.add_argument("--yolo_names", type=str, default="YOLOv3/cfg/coco.names")
     parser.add_argument("--deepsort_checkpoint", type=str, default="deep_sort/deep/checkpoint/ckpt.t7")
+    parser.add_argument("--ignore_display", dst="display", action="store_false")
     parser.add_argument("--save_path", type=str, default="demo.avi")
     return parser.parse_args()
 
