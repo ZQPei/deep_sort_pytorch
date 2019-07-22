@@ -1,8 +1,10 @@
 # Deep Sort with PyTorch
 
 ## Latest Update(07-22)
-- bug fix (Thanks @JieChen91 and @yingsen1 for bug reporting)
+- bug fix (Thanks @JieChen91 and @yingsen1 for bug reporting)  
 - using batch for feature extracting for each frame, which lead to a small speed up  
+
+![](images/demo.gif)
 
 
 ## Introduction
@@ -12,9 +14,10 @@ However in original code, the CNN model is implemented with tensorflow, which I'
 ## Dependencies
 - python 3 (python2 not sure)
 - numpy
-- cv2
+- scipy
+- opencv-python
 - sklearn
-- pytorch 0.4.0 or 1.0.0 or 1.1.0
+- pytorch 0.4 or 1.x
 
 ## Quick Start
 0. Check all dependencies installed
