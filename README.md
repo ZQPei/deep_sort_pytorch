@@ -1,8 +1,17 @@
 # Deep Sort with PyTorch
 
 ## Latest Update(07-22)
-- bug fix (Thanks @JieChen91 and @yingsen1 for bug reporting)  
-- using batch for feature extracting for each frame, which lead to a small speed up  
+Changes
+- bug fix (Thanks @JieChen91 and @yingsen1 for bug reporting).  
+- using batch for feature extracting for each frame, which lead to a small speed up.  
+- code improvement.
+
+Futher improvement direction  
+- Train detector on specific dataset rather than the official one.
+- Retrain REID model on pedestrain dataset for better performance.
+- Replace YOLOv3 detector with advanced ones.
+
+Any contributions to this repository is welcome!
 
 ![](images/demo.gif)
 
