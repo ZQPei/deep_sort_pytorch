@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 
-from YOLO3 import YOLO3
+from YOLOv3 import YOLO3
 from deep_sort import DeepSort
 from util import COLORS_10, draw_bboxes
 
@@ -21,18 +21,17 @@ class Detector(object):
         self.vdo.open(video_path)
         self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.area = 0, 0, self.im_width, self.im_height
+
         if self.write_video:
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
             self.output = cv2.VideoWriter("demo.avi", fourcc, 20, (self.im_width,self.im_height))
         return self.vdo.isOpened()
         
     def detect(self):
-        xmin, ymin, xmax, ymax = self.area
         while self.vdo.grab(): 
             start = time.time()
             _, ori_im = self.vdo.retrieve()
-            im = ori_im[ymin:ymax, xmin:xmax, (2,1,0)]
+            im = ori_im.transpose(2,0,1)
             bbox_xywh, cls_conf, cls_ids = self.yolo3(im)
             if bbox_xywh is not None:
                 mask = cls_ids==0
@@ -43,7 +42,7 @@ class Detector(object):
                 if len(outputs) > 0:
                     bbox_xyxy = outputs[:,:4]
                     identities = outputs[:,-1]
-                    ori_im = draw_bboxes(ori_im, bbox_xyxy, identities, offset=(xmin,ymin))
+                    ori_im = draw_bboxes(ori_im, bbox_xyxy, identities)
 
             end = time.time()
             print("time: {}s, fps: {}".format(end-start, 1/(end-start)))

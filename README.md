@@ -26,10 +26,10 @@ cd ..
 ```
 3. Download deepsort parameters ckpt.t7
 ```
-cd deep/checkpoint
+cd deep_sort/deep/checkpoint
 # download ckpt.t7 from 
 https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6 to this folder
-cd ../../
+cd ../../../
 ```  
 4. Run demo
 ```
@@ -41,8 +41,8 @@ The original model used in paper is in original_model.py, and its parameter here
 
 To train the model, first you need download [Market1501](http://www.liangzheng.org/Project/project_reid.html) dataset or [Mars](http://www.liangzheng.com.cn/Project/project_mars.html) dataset.  
 
-Then you can try [train.py](deep/train.py) to train your own parameter and evaluate it using [test.py](deep/test.py) and [evaluate.py](deep/evalute.py).
-![train.jpg](deep/train.jpg)
+Then you can try [train.py](deep_sort/deep/train.py) to train your own parameter and evaluate it using [test.py](deep_sort/deep/test.py) and [evaluate.py](deep_sort/deep/evalute.py).
+![train.jpg](deep_sort/deep/train.jpg)
 
 ## Demo videos and images
 [demo.avi](https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6)
@@ -51,7 +51,7 @@ Then you can try [train.py](deep/train.py) to train your own parameter and evalu
 ![1.jpg](images/1.jpg)
 ![2.jpg](images/2.jpg)
 
-All files can also be accessed by BaiduDisk!  
+All files can also be accessed from BaiduDisk!  
 linker：https://pan.baidu.com/s/1TEFdef9tkJVT0Vf0DUZvrg  
 passwd：1eqo
 
