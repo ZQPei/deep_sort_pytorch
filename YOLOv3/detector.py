@@ -8,7 +8,7 @@ from yolo_utils import get_all_boxes, nms, plot_boxes_cv2
 
 
 class YOLOv3(object):
-    def __init__(self, cfgfile, weightfile, namesfile, use_cuda=True, is_plot=False, is_xywh=False):
+    def __init__(self, cfgfile, weightfile, namesfile, use_cuda=True, is_plot=False, is_xywh=False, conf_thresh=0.1, nms_thresh=0.4):
         # net definition
         self.net = Darknet(cfgfile)
         self.net.load_weights(weightfile)
@@ -19,8 +19,8 @@ class YOLOv3(object):
 
         # constants
         self.size = self.net.width, self.net.height
-        self.conf_thresh = 0.3
-        self.nms_thresh = 0.4
+        self.conf_thresh = conf_thresh
+        self.nms_thresh = nms_thresh
         self.use_cuda = use_cuda
         self.is_plot = is_plot
         self.is_xywh = is_xywh
