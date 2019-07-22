@@ -87,14 +87,13 @@ class DeepSort(object):
         return x1,y1,x2,y2
     
     def _get_features(self, bbox_xywh, ori_img):
-        features = []
+        im_crops = []
         for box in bbox_xywh:
             x1,y1,x2,y2 = self._xywh_to_xyxy(box)
             im = ori_img[y1:y2,x1:x2]
-            feature = self.extractor(im)[0]
-            features.append(feature)
-        if len(features):
-            features = np.stack(features, axis=0)
+            im_crops.append(im)
+        if im_crops:
+            features = self.extractor(im_crops)
         else:
             features = np.array([])
         return features
