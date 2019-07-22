@@ -51,7 +51,7 @@ class DeepSort(object):
             outputs = np.stack(outputs,axis=0)
         return outputs
 
-    def _
+    # def _
 
     def _xywh_to_xyxy(self, bbox_xywh):
         x,y,w,h = bbox_xywh
