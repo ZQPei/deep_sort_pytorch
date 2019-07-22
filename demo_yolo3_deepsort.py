@@ -1,30 +1,34 @@
 import os
 import cv2
+import time
+import argparse
 import numpy as np
 
 from YOLOv3 import YOLOv3
 from deep_sort import DeepSort
 from util import COLORS_10, draw_bboxes
 
-import time
 
 class Detector(object):
-    def __init__(self):
+    def __init__(self, args):
+        self.args = args
+        cv2.namedWindow("test", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("test", args.width, args.height)
         self.vdo = cv2.VideoCapture()
-        self.yolo3 = YOLOv3("YOLOv3/cfg/yolo_v3.cfg","YOLOv3/yolov3.weights","YOLOv3/cfg/coco.names", is_xywh=True)
-        self.deepsort = DeepSort("deep_sort/deep/checkpoint/ckpt.t7")
+        self.yolo3 = YOLOv3(args.yolo_cfg, args.yolo_weights, args.yolo_names, is_xywh=True)
+        self.deepsort = DeepSort(args.deep_sort_checkpoint)
         self.class_names = self.yolo3.class_names
         self.write_video = True
 
-    def open(self, video_path):
-        assert os.path.isfile(video_path), "Error: path error"
-        self.vdo.open(video_path)
+    def init(self):
+        assert os.path.isfile(self.args.VIDEO_PATH), "Error: path error"
+        self.vdo.open(self.args.VIDEO_PATH)
         self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         if self.write_video:
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
-            self.output = cv2.VideoWriter("demo.avi", fourcc, 20, (self.im_width,self.im_height))
+            self.output = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
         return self.vdo.isOpened()
         
     def detect(self):
@@ -54,16 +58,21 @@ class Detector(object):
                 self.output.write(ori_im)
             
 
-
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("VIDEO_PATH", type=str)
+    parser.add_argument("--width", type=int, default=800)
+    parser.add_argument("--height", type=int, default=600)
+    parser.add_argument("--yolo_cfg", type=str, default="YOLOv3/cfg/yolo_v3.cfg")
+    parser.add_argument("--yolo_weights", type=str, default="YOLOv3/yolov3.weights")
+    parser.add_argument("--yolo_names", type=str, default="YOLOv3/cfg/coco.names")
+    parser.add_argument("--deep_sort_checkpoint", type=str, default="deep_sort/deep/checkpoint/ckpt.t7")
+    parser.add_argument("--save_path", type=str, default="demo.avi")
+    return parser.parse_args()
 
 
 if __name__=="__main__":
-    import sys
-    if len(sys.argv) == 1:
-        print("Usage: python demo_yolo3_deepsort.py [YOUR_VIDEO_PATH]")
-    else:
-        cv2.namedWindow("test", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("test", 800,600)
-        det = Detector()
-        det.open(sys.argv[1])
-        det.detect()
+    args = parse_args()
+    det = Detector(args)
+    det.init()
+    det.detect()
