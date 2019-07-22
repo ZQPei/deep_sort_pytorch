@@ -19,6 +19,8 @@ class Detector(object):
         self.deepsort = DeepSort(args.deep_sort_checkpoint)
         self.class_names = self.yolo3.class_names
 
+        assert self.init()
+
 
     def init(self):
         assert os.path.isfile(self.args.VIDEO_PATH), "Error: path error"
@@ -26,6 +28,7 @@ class Detector(object):
         self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+        print("sasa")
         if self.args.save_path:
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
             self.output = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
@@ -74,6 +77,5 @@ def parse_args():
 
 if __name__=="__main__":
     args = parse_args()
-    det = Detector(args)
-    det.init()
-    det.detect()
+    with Detector(args) as det:
+        det.detect()
