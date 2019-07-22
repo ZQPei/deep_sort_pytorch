@@ -48,16 +48,18 @@ cd ../../../
 
 4. Run demo
 ```
-usage: demo_yolo3_deepsort.py [VIDEO_PATH]
+usage: demo_yolo3_deepsort.py VIDEO_PATH
                               [--help] 
                               [--yolo_cfg YOLO_CFG]
                               [--yolo_weights YOLO_WEIGHTS]
                               [--yolo_names YOLO_NAMES]
+                              [--conf_thresh CONF_THRESH]
+                              [--nms_thresh NMS_THRESH]
                               [--deepsort_checkpoint DEEPSORT_CHECKPOINT]
-                              [--ignore_display]
+                              [--max_dist MAX_DIST] [--ignore_display]
                               [--display_width DISPLAY_WIDTH]
                               [--display_height DISPLAY_HEIGHT]
-                              [--save_path SAVE_PATH]
+                              [--save_path SAVE_PATH]          
 ```
 
 All files above can also be accessed from BaiduDisk!  
