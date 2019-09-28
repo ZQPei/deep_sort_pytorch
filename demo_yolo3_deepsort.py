@@ -17,8 +17,8 @@ class Detector(object):
             cv2.resizeWindow("test", args.display_width, args.display_height)
 
         self.vdo = cv2.VideoCapture()
-        self.yolo3 = YOLOv3(args.yolo_cfg, args.yolo_weights, args.yolo_names, is_xywh=True, conf_thresh=args.conf_thresh, nms_thresh=args.nms_thresh)
-        self.deepsort = DeepSort(args.deepsort_checkpoint)
+        self.yolo3 = YOLOv3(args.yolo_cfg, args.yolo_weights, args.yolo_names, is_xywh=True, conf_thresh=args.conf_thresh, nms_thresh=args.nms_thresh, use_cuda=False)
+        self.deepsort = DeepSort(args.deepsort_checkpoint, use_cuda=False)
         self.class_names = self.yolo3.class_names
 
 

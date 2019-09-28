@@ -37,7 +37,7 @@ class YOLOv3(object):
         with torch.no_grad():
             img = img.to(self.device)
             out_boxes = self.net(img)
-            boxes = get_all_boxes(out_boxes, self.conf_thresh, self.net.num_classes, self.use_cuda)[0]
+            boxes = get_all_boxes(out_boxes, self.conf_thresh, self.net.num_classes, use_cuda=self.use_cuda)[0]
             boxes = nms(boxes, self.nms_thresh)
             # print(boxes)
         # plot boxes
