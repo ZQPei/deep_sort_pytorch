@@ -72,6 +72,7 @@ usage: demo_yolo3_deepsort.py VIDEO_PATH
                               [--display_width DISPLAY_WIDTH]
                               [--display_height DISPLAY_HEIGHT]
                               [--save_path SAVE_PATH]          
+                              [--use_cuda USE_CUDA]          
 ```
 
 All files above can also be accessed from BaiduDisk!  
