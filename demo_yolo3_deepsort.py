@@ -3,6 +3,7 @@ import cv2
 import time
 import argparse
 import numpy as np
+from distutils.util import strtobool
 
 from YOLOv3 import YOLOv3
 from deep_sort import DeepSort
@@ -12,13 +13,14 @@ from util import COLORS_10, draw_bboxes
 class Detector(object):
     def __init__(self, args):
         self.args = args
+        use_cuda = bool(strtobool(self.args.use_cuda))
         if args.display:
             cv2.namedWindow("test", cv2.WINDOW_NORMAL)
             cv2.resizeWindow("test", args.display_width, args.display_height)
 
         self.vdo = cv2.VideoCapture()
-        self.yolo3 = YOLOv3(args.yolo_cfg, args.yolo_weights, args.yolo_names, is_xywh=True, conf_thresh=args.conf_thresh, nms_thresh=args.nms_thresh)
-        self.deepsort = DeepSort(args.deepsort_checkpoint)
+        self.yolo3 = YOLOv3(args.yolo_cfg, args.yolo_weights, args.yolo_names, is_xywh=True, conf_thresh=args.conf_thresh, nms_thresh=args.nms_thresh, use_cuda=use_cuda)
+        self.deepsort = DeepSort(args.deepsort_checkpoint, use_cuda=use_cuda)
         self.class_names = self.yolo3.class_names
 
 
@@ -87,6 +89,7 @@ def parse_args():
     parser.add_argument("--display_width", type=int, default=800)
     parser.add_argument("--display_height", type=int, default=600)
     parser.add_argument("--save_path", type=str, default="demo.avi")
+    parser.add_argument("--use_cuda", type=str, default="True")
     return parser.parse_args()
 
 
