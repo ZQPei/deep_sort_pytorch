@@ -76,8 +76,8 @@ usage: demo_yolo3_deepsort.py VIDEO_PATH
 ```
 
 All files above can also be accessed from BaiduDisk!  
-linker：https://pan.baidu.com/s/1TEFdef9tkJVT0Vf0DUZvrg  
-passwd：1eqo  
+linker：[BaiduDisk](https://pan.baidu.com/s/1YJ1iPpdFTlUyLFoonYvozg)
+passwd：fbuw
 
 ## Training the RE-ID model
 The original model used in paper is in original_model.py, and its parameter here [original_ckpt.t7](https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6).  
