@@ -45,9 +45,9 @@ git clone git@github.com:ZQPei/deep_sort_pytorch.git
 
 2. Download YOLOv3 parameters
 ```
-cd YOLOv3/weight/
+cd detector/YOLOv3/weight/
 wget https://pjreddie.com/media/files/yolov3.weights
-cd ../..
+cd ../../../
 ```
 
 3. Download deepsort parameters ckpt.t7
@@ -58,7 +58,14 @@ https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6 to this
 cd ../../../
 ```  
 
-4. Run demo
+4. Compile nms module
+```bash
+cd detector/YOLOv3/nms/ext
+python build.py build_ext develop
+cd ../../../../
+```
+
+5. Run demo
 ```
 usage: python demo_yolov3_deepsort.py VIDEO_PATH
                                       [--help] 
