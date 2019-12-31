@@ -13,7 +13,7 @@ Futher improvement direction
 
 Any contributions to this repository is welcome!
 
-![](images/demo.gif)
+![](demo/demo.gif)
 
 
 ## Introduction
@@ -45,9 +45,9 @@ git clone git@github.com:ZQPei/deep_sort_pytorch.git
 
 2. Download YOLOv3 parameters
 ```
-cd YOLOv3/
+cd YOLOv3/weight/
 wget https://pjreddie.com/media/files/yolov3.weights
-cd ..
+cd ../..
 ```
 
 3. Download deepsort parameters ckpt.t7
@@ -60,19 +60,19 @@ cd ../../../
 
 4. Run demo
 ```
-usage: demo_yolo3_deepsort.py VIDEO_PATH
-                              [--help] 
-                              [--yolo_cfg YOLO_CFG]
-                              [--yolo_weights YOLO_WEIGHTS]
-                              [--yolo_names YOLO_NAMES]
-                              [--conf_thresh CONF_THRESH]
-                              [--nms_thresh NMS_THRESH]
-                              [--deepsort_checkpoint DEEPSORT_CHECKPOINT]
-                              [--max_dist MAX_DIST] [--ignore_display]
-                              [--display_width DISPLAY_WIDTH]
-                              [--display_height DISPLAY_HEIGHT]
-                              [--save_path SAVE_PATH]          
-                              [--use_cuda USE_CUDA]          
+usage: python demo_yolov3_deepsort.py VIDEO_PATH
+                                      [--help] 
+                                      [--yolo_cfg YOLO_CFG]
+                                      [--yolo_weights YOLO_WEIGHTS]
+                                      [--yolo_names YOLO_NAMES]
+                                      [--score_thresh score_thresh]
+                                      [--nms_thresh NMS_THRESH]
+                                      [--deepsort_checkpoint DEEPSORT_CHECKPOINT]
+                                      [--max_dist MAX_DIST] [--ignore_display]
+                                      [--display_width DISPLAY_WIDTH]
+                                      [--display_height DISPLAY_HEIGHT]
+                                      [--save_path SAVE_PATH]          
+                                      [--use_cuda USE_CUDA]          
 ```
 
 All files above can also be accessed from BaiduDisk!  
@@ -91,8 +91,8 @@ Then you can try [train.py](deep_sort/deep/train.py) to train your own parameter
 [demo.avi](https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6)
 [demo2.avi](https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6)
 
-![1.jpg](images/1.jpg)
-![2.jpg](images/2.jpg)
+![1.jpg](demo/1.jpg)
+![2.jpg](demo/2.jpg)
 
 
 ## References
