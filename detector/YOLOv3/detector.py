@@ -9,7 +9,7 @@ from nms import boxes_nms
 
 
 class YOLOv3(object):
-    def __init__(self, cfgfile, weightfile, namesfile, use_cuda=True, is_xywh=False, score_thresh=0.7, conf_thresh=0.01, nms_thresh=0.45):
+    def __init__(self, cfgfile, weightfile, namesfile, score_thresh=0.7, conf_thresh=0.01, nms_thresh=0.45, is_xywh=False, use_cuda=True):
         # net definition
         self.net = Darknet(cfgfile)
         self.net.load_weights(weightfile)
@@ -35,6 +35,7 @@ class YOLOv3(object):
 
         img = cv2.resize(img, self.size)
         img = torch.from_numpy(img).float().permute(2,0,1).unsqueeze(0)
+        
         # forward
         with torch.no_grad():
             img = img.to(self.device)
@@ -44,8 +45,6 @@ class YOLOv3(object):
 
             boxes = post_process(boxes, self.net.num_classes, self.conf_thresh, self.nms_thresh)[0].cpu()
             boxes = boxes[boxes[:,-2]>self.score_thresh, :] # bbox xmin ymin xmax ymax
-
-            # print(boxes)
 
         if len(boxes)==0:
             return None,None,None

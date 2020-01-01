@@ -9,10 +9,12 @@ from distutils.util import strtobool
 from detector import build_detector
 from deep_sort import build_tracker
 from utils.draw import draw_boxes
+from utils.parser import get_config
 
 
 class Tracker(object):
-    def __init__(self, args):
+    def __init__(self, cfg, args):
+        self.cfg = cfg
         self.args = args
         use_cuda = args.use_cuda and torch.cuda.is_available()
         if not use_cuda:
@@ -23,8 +25,8 @@ class Tracker(object):
             cv2.resizeWindow("test", args.display_width, args.display_height)
 
         self.vdo = cv2.VideoCapture()
-        self.detector = build_detector(args, use_cuda=use_cuda)
-        self.deepsort = build_tracker(args, use_cuda=use_cuda)
+        self.detector = build_detector(cfg, use_cuda=use_cuda)
+        self.deepsort = build_tracker(cfg, use_cuda=use_cuda)
         self.class_names = self.detector.class_names
 
 
@@ -36,7 +38,7 @@ class Tracker(object):
 
         if self.args.save_path:
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
-            self.output = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
+            self.writer = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
 
         assert self.vdo.isOpened()
         return self
@@ -80,28 +82,27 @@ class Tracker(object):
                 cv2.waitKey(1)
 
             if self.args.save_path:
-                self.output.write(ori_im)
+                self.writer.write(ori_im)
             
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("VIDEO_PATH", type=str)
-    parser.add_argument("--yolo_cfg", type=str, default="./detector/YOLOv3/cfg/yolo_v3.cfg")
-    parser.add_argument("--yolo_weights", type=str, default="./detector/YOLOv3/weight/yolov3.weights")
-    parser.add_argument("--yolo_names", type=str, default="./detector/YOLOv3/cfg/coco.names")
-    parser.add_argument("--score_thresh", type=float, default=0.5)
-    parser.add_argument("--nms_thresh", type=float, default=0.4)
-    parser.add_argument("--deepsort_checkpoint", type=str, default="./deep_sort/deep/checkpoint/ckpt.t7")
-    parser.add_argument("--max_dist", type=float, default=0.2)
+    parser.add_argument("--config_detection", type=str, default="./configs/yolov3.yaml")
+    parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
     parser.add_argument("--ignore_display", dest="display", action="store_false", default=True)
     parser.add_argument("--display_width", type=int, default=800)
     parser.add_argument("--display_height", type=int, default=600)
-    parser.add_argument("--save_path", type=str, default="demo.avi")
-    parser.add_argument("--cpu", dest="use_cuda", action='store_false', default=True)
+    parser.add_argument("--save_path", type=str, default="./demo/demo.avi")
+    parser.add_argument("--cpu", dest="use_cuda", action="store_false", default=True)
     return parser.parse_args()
 
 
 if __name__=="__main__":
     args = parse_args()
-    with Tracker(args) as trk:
+    cfg = get_config()
+    cfg.merge_from_file(args.config_detection)
+    cfg.merge_from_file(args.config_deepsort)
+
+    with Tracker(cfg, args) as trk:
         trk.run()

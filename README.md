@@ -1,5 +1,13 @@
 # Deep Sort with PyTorch
 
+![](demo/demo.gif)
+
+## Update(1-1-2020)
+Changes
+- fix bugs
+- refactor code
+- accerate detection by adding nms on gpu
+
 ## Latest Update(07-22)
 Changes
 - bug fix (Thanks @JieChen91 and @yingsen1 for bug reporting).  
@@ -13,8 +21,6 @@ Futher improvement direction
 
 Any contributions to this repository is welcome!
 
-![](demo/demo.gif)
-
 
 ## Introduction
 This is an implement of MOT tracking algorithm deep sort. Deep sort is basicly the same with sort but added a CNN model to extract features in image of human part bounded by a detector. This CNN model is indeed a RE-ID model and the detector used in [PAPER](https://arxiv.org/abs/1703.07402) is FasterRCNN , and the original source code is [HERE](https://github.com/nwojke/deep_sort).  
@@ -26,7 +32,7 @@ However in original code, the CNN model is implemented with tensorflow, which I'
 - scipy
 - opencv-python
 - sklearn
-- pytorch 0.4 or 1.x
+- torch >=0.4
 
 ## Quick Start
 0. Check all dependencies installed
@@ -47,6 +53,7 @@ git clone git@github.com:ZQPei/deep_sort_pytorch.git
 ```
 cd detector/YOLOv3/weight/
 wget https://pjreddie.com/media/files/yolov3.weights
+wget https://pjreddie.com/media/files/yolov3-tiny.weights
 cd ../../../
 ```
 
@@ -67,22 +74,24 @@ cd ../../../../
 
 5. Run demo
 ```
-usage: python demo_yolov3_deepsort.py VIDEO_PATH
-                                      [--help] 
-                                      [--yolo_cfg YOLO_CFG]
-                                      [--yolo_weights YOLO_WEIGHTS]
-                                      [--yolo_names YOLO_NAMES]
-                                      [--score_thresh score_thresh]
-                                      [--nms_thresh NMS_THRESH]
-                                      [--deepsort_checkpoint DEEPSORT_CHECKPOINT]
-                                      [--max_dist MAX_DIST] [--ignore_display]
-                                      [--display_width DISPLAY_WIDTH]
-                                      [--display_height DISPLAY_HEIGHT]
-                                      [--save_path SAVE_PATH]          
-                                      [--cpu]          
+usage: python yolov3_deepsort.py VIDEO_PATH
+                                [--help] 
+                                [--config_detection CONFIG_DETECTION]
+                                [--config_deepsort CONFIG_DEEPSORT]
+                                [--ignore_display]
+                                [--display_width DISPLAY_WIDTH]
+                                [--display_height DISPLAY_HEIGHT]
+                                [--save_path SAVE_PATH]          
+                                [--cpu]          
 
+# yolov3 + deepsort
+python yolov3_deepsort.py [VIDEO_PATH]
+
+# yolov3_tiny + deepsort
+python yolov3_deepsort.py [VIDEO_PATH] --config_detection ./configs/yolov3_tiny.yaml
 ```
 If you dont support X server, use `--ignore_display` to disable display.
+Results will be saved to `./demo/demo.avi`.
 
 All files above can also be accessed from BaiduDisk!  
 linker：[BaiduDisk](https://pan.baidu.com/s/1YJ1iPpdFTlUyLFoonYvozg)

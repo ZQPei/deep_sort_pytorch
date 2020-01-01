@@ -2,6 +2,7 @@ import warnings
 import torchvision
 
 try:
+    import torch
     import torch_extension
 
     _nms = torch_extension.nms
