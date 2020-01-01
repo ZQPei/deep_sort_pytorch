@@ -80,7 +80,9 @@ usage: python demo_yolov3_deepsort.py VIDEO_PATH
                                       [--display_height DISPLAY_HEIGHT]
                                       [--save_path SAVE_PATH]          
                                       [--cpu]          
+
 ```
+If you dont support X server, use `--ignore_display` to disable display.
 
 All files above can also be accessed from BaiduDisk!  
 linker：[BaiduDisk](https://pan.baidu.com/s/1YJ1iPpdFTlUyLFoonYvozg)

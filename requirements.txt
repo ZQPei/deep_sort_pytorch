@@ -5,3 +5,4 @@ torch
 torchvision
 opencv-python
 sklearn
+vizer

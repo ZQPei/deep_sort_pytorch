@@ -7,8 +7,8 @@ import numpy as np
 from distutils.util import strtobool
 
 from detector import build_detector
-from deep_sort import DeepSort
-from util import COLORS_10, draw_bboxes
+from deep_sort import build_tracker
+from utils.draw import draw_boxes
 
 
 class Tracker(object):
@@ -24,7 +24,7 @@ class Tracker(object):
 
         self.vdo = cv2.VideoCapture()
         self.yolo = build_detector(args, use_cuda=use_cuda)
-        self.deepsort = DeepSort(args.deepsort_checkpoint, use_cuda=use_cuda)
+        self.deepsort = build_tracker(args, use_cuda=use_cuda)
         self.class_names = self.yolo.class_names
 
 
@@ -55,21 +55,19 @@ class Tracker(object):
             im = ori_im
             bbox_xywh, cls_conf, cls_ids = self.yolo(im)
             if bbox_xywh is not None:
-                # select class person
+                # select person
                 mask = cls_ids==0
 
                 bbox_xywh = bbox_xywh[mask]
                 bbox_xywh[:,3:] *= 1.2
 
                 cls_conf = cls_conf[mask]
-                try:
-                    outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
-                except:
-                    import ipdb; ipdb.set_trace()
+                outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
+
                 if len(outputs) > 0:
                     bbox_xyxy = outputs[:,:4]
                     identities = outputs[:,-1]
-                    ori_im = draw_bboxes(ori_im, bbox_xyxy, identities)
+                    ori_im = draw_boxes(ori_im, bbox_xyxy, identities)
 
             end = time.time()
             print("time: {:.03f}s, fps: {:.03f}".format(end-start, 1/(end-start)))
