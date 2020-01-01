@@ -1,5 +1,7 @@
 # Folders
 __pycache__/
+build/
+*.egg-info
 
 
 # Files
@@ -7,3 +9,4 @@ __pycache__/
 *.t7
 *.mp4
 *.avi
+*.so

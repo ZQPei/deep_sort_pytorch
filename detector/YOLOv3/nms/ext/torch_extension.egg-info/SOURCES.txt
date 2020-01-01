@@ -1,8 +1,0 @@
-build.py
-/home/pzq/github/deep_sort_pytorch/YOLOv3/nms/vision.cpp
-/home/pzq/github/deep_sort_pytorch/YOLOv3/nms/cpu/nms_cpu.cpp
-/home/pzq/github/deep_sort_pytorch/YOLOv3/nms/cuda/nms.cu
-torch_extension.egg-info/PKG-INFO
-torch_extension.egg-info/SOURCES.txt
-torch_extension.egg-info/dependency_links.txt
-torch_extension.egg-info/top_level.txt
