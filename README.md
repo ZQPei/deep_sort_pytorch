@@ -32,7 +32,11 @@ However in original code, the CNN model is implemented with tensorflow, which I'
 - scipy
 - opencv-python
 - sklearn
-- torch >=0.4
+- torch >= 0.4
+- torchvision >= 0.1
+- pillow
+- vizer
+- edict
 
 ## Quick Start
 0. Check all dependencies installed
