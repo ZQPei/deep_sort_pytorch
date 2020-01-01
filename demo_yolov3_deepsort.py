@@ -23,9 +23,9 @@ class Tracker(object):
             cv2.resizeWindow("test", args.display_width, args.display_height)
 
         self.vdo = cv2.VideoCapture()
-        self.yolo = build_detector(args, use_cuda=use_cuda)
+        self.detector = build_detector(args, use_cuda=use_cuda)
         self.deepsort = build_tracker(args, use_cuda=use_cuda)
-        self.class_names = self.yolo.class_names
+        self.class_names = self.detector.class_names
 
 
     def __enter__(self):
@@ -52,18 +52,21 @@ class Tracker(object):
             start = time.time()
             _, ori_im = self.vdo.retrieve()
             im = cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB)
-            im = ori_im
-            bbox_xywh, cls_conf, cls_ids = self.yolo(im)
+
+            # do detection
+            bbox_xywh, cls_conf, cls_ids = self.detector(im)
             if bbox_xywh is not None:
-                # select person
+                # select person class
                 mask = cls_ids==0
 
                 bbox_xywh = bbox_xywh[mask]
-                bbox_xywh[:,3:] *= 1.2
-
+                bbox_xywh[:,3:] *= 1.2 # bbox dilation just in case bbox too small
                 cls_conf = cls_conf[mask]
+
+                # do tracking
                 outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
 
+                # draw boxes for visualization
                 if len(outputs) > 0:
                     bbox_xyxy = outputs[:,:4]
                     identities = outputs[:,-1]
