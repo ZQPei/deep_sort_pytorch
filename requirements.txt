@@ -6,4 +6,5 @@ torchvision
 opencv-python
 sklearn
 vizer
-edict
+pyyaml
+easydict
