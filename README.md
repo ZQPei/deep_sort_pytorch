@@ -71,9 +71,9 @@ cd ../../../
 
 4. Compile nms module
 ```bash
-cd detector/YOLOv3/nms/ext
-python build.py build_ext develop
-cd ../../../../
+cd detector/YOLOv3/nms
+sh build.sh
+cd ../../..
 ```
 
 5. Run demo
