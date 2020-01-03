@@ -80,6 +80,7 @@ cd ../../..
 ```
 usage: python yolov3_deepsort.py VIDEO_PATH
                                 [--help] 
+                                [--frame_interval FRAME_INTERVAL]
                                 [--config_detection CONFIG_DETECTION]
                                 [--config_deepsort CONFIG_DEEPSORT]
                                 [--ignore_display]
