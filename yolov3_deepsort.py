@@ -4,7 +4,6 @@ import time
 import argparse
 import torch
 import numpy as np
-from distutils.util import strtobool
 
 from detector import build_detector
 from deep_sort import build_tracker
@@ -12,7 +11,7 @@ from utils.draw import draw_boxes
 from utils.parser import get_config
 
 
-class Tracker(object):
+class VideoTracker(object):
     def __init__(self, cfg, args):
         self.cfg = cfg
         self.args = args
@@ -110,5 +109,5 @@ if __name__=="__main__":
     cfg.merge_from_file(args.config_detection)
     cfg.merge_from_file(args.config_deepsort)
 
-    with Tracker(cfg, args) as trk:
-        trk.run()
+    with VideoTracker(cfg, args) as vdo_trk:
+        vdo_trk.run()
