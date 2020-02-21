@@ -45,7 +45,7 @@ pip install -r requirements.txt
 ```
 for user in china, you can specify pypi source to accelerate install like:
 ```bash
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple 
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 1. Clone this repository
@@ -64,7 +64,7 @@ cd ../../../
 3. Download deepsort parameters ckpt.t7
 ```
 cd deep_sort/deep/checkpoint
-# download ckpt.t7 from 
+# download ckpt.t7 from
 https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6 to this folder
 cd ../../../
 ```  
@@ -79,7 +79,7 @@ cd ../../..
 5. Run demo
 ```
 usage: python yolov3_deepsort.py VIDEO_PATH
-                                [--help] 
+                                [--help]
                                 [--frame_interval FRAME_INTERVAL]
                                 [--config_detection CONFIG_DETECTION]
                                 [--config_deepsort CONFIG_DEEPSORT]
@@ -94,6 +94,12 @@ python yolov3_deepsort.py [VIDEO_PATH]
 
 # yolov3_tiny + deepsort
 python yolov3_deepsort.py [VIDEO_PATH] --config_detection ./configs/yolov3_tiny.yaml
+
+# yolov3 + deepsort on webcam
+python3 yolov3_deepsort.py /dev/video0 --camera 0
+
+# yolov3_tiny + deepsort on webcam
+python3 yolov3_deepsort.py /dev/video0 --config_detection ./configs/yolov3_tiny.yaml --camera 0
 ```
 If you dont support X server, use `--ignore_display` to disable display.
 Results will be saved to `./demo/demo.avi`.
@@ -126,6 +132,3 @@ Then you can try [train.py](deep_sort/deep/train.py) to train your own parameter
 - paper: [YOLOv3](https://pjreddie.com/media/files/papers/YOLOv3.pdf)
 
 - code: [Joseph Redmon/yolov3](https://pjreddie.com/darknet/yolo/)
-
-
-
