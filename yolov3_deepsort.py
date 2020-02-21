@@ -1,6 +1,6 @@
 import os
 import cv2
-import time, sys
+import time
 import argparse
 import torch
 import numpy as np
