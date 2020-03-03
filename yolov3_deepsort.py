@@ -3,6 +3,7 @@ import cv2
 import time
 import argparse
 import torch
+import warnings
 import numpy as np
 
 from detector import build_detector
@@ -17,7 +18,7 @@ class VideoTracker(object):
         self.args = args
         use_cuda = args.use_cuda and torch.cuda.is_available()
         if not use_cuda:
-            print("Running in cpu mode which maybe very slow!")
+            warnings.warn("Running in cpu mode which maybe very slow!", UserWarning)
 
         if args.display:
             cv2.namedWindow("test", cv2.WINDOW_NORMAL)
