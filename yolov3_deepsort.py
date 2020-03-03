@@ -23,34 +23,45 @@ class VideoTracker(object):
             cv2.namedWindow("test", cv2.WINDOW_NORMAL)
             cv2.resizeWindow("test", args.display_width, args.display_height)
 
-        self.vdo = cv2.VideoCapture()
+        if args.cam != -1:
+            print("Using webcam " + str(args.cam))
+            self.vdo = cv2.VideoCapture(args.cam)
+        else:
+            self.vdo = cv2.VideoCapture()
         self.detector = build_detector(cfg, use_cuda=use_cuda)
         self.deepsort = build_tracker(cfg, use_cuda=use_cuda)
         self.class_names = self.detector.class_names
 
 
     def __enter__(self):
-        assert os.path.isfile(self.args.VIDEO_PATH), "Error: path error"
-        self.vdo.open(self.args.VIDEO_PATH)
-        self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        if self.args.cam != -1:
+            ret, frame = self.vdo.read()
+            assert ret, "Error: Camera error"
+            self.im_width = frame.shape[0]
+            self.im_height = frame.shape[1]
+
+        else:
+            assert os.path.isfile(self.args.VIDEO_PATH), "Error: path error"
+            self.vdo.open(self.args.VIDEO_PATH)
+            self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
+            self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            assert self.vdo.isOpened()
 
         if self.args.save_path:
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
             self.writer = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
 
-        assert self.vdo.isOpened()
         return self
 
-    
+
     def __exit__(self, exc_type, exc_value, exc_traceback):
         if exc_type:
             print(exc_type, exc_value, exc_traceback)
-        
+
 
     def run(self):
         idx_frame = 0
-        while self.vdo.grab(): 
+        while self.vdo.grab():
             idx_frame += 1
             if idx_frame % self.args.frame_interval:
                 continue
@@ -87,7 +98,7 @@ class VideoTracker(object):
 
             if self.args.save_path:
                 self.writer.write(ori_im)
-            
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -100,6 +111,7 @@ def parse_args():
     parser.add_argument("--display_height", type=int, default=600)
     parser.add_argument("--save_path", type=str, default="./demo/demo.avi")
     parser.add_argument("--cpu", dest="use_cuda", action="store_false", default=True)
+    parser.add_argument("--camera", action="store", dest="cam", type=int, default="-1")
     return parser.parse_args()
 
 
