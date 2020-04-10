@@ -19,7 +19,7 @@ Futher improvement direction
 - Retrain REID model on pedestrain dataset for better performance.
 - Replace YOLOv3 detector with advanced ones.
 
-Any contributions to this repository is welcome!
+**Any contributions to this repository is welcome!**
 
 
 ## Introduction
