@@ -10,12 +10,36 @@ from detector import build_detector
 from deep_sort import build_tracker
 from utils.draw import draw_boxes
 from utils.parser import get_config
+from utils.log import logger
+
+def write_results(filename, results, data_type):
+    if data_type == 'mot':
+        save_format = '{frame},{id},{x1},{y1},{w},{h},-1,-1,-1,-1\n'
+    elif data_type == 'kitti':
+        save_format = '{frame} {id} pedestrian 0 0 -10 {x1} {y1} {x2} {y2} -10 -10 -10 -1000 -1000 -1000 -10\n'
+    else:
+        raise ValueError(data_type)
+
+    with open(filename, 'w') as f:
+        for frame_id, tlwhs, track_ids in results:
+            if data_type == 'kitti':
+                frame_id -= 1
+            for tlwh, track_id in zip(tlwhs, track_ids):
+                if track_id < 0:
+                    continue
+                x1, y1, w, h = tlwh
+                x2, y2 = x1 + w, y1 + h
+                line = save_format.format(frame=frame_id, id=track_id, x1=x1, y1=y1, x2=x2, y2=y2, w=w, h=h)
+                f.write(line)
+    logger.info('save results to {}'.format(filename))
 
 
 class VideoTracker(object):
-    def __init__(self, cfg, args):
+    def __init__(self, cfg, args, video_path, result_filename="results"):
         self.cfg = cfg
         self.args = args
+        self.result_filename = result_filename
+        self.video_path = video_path
         use_cuda = args.use_cuda and torch.cuda.is_available()
         if not use_cuda:
             warnings.warn("Running in cpu mode which maybe very slow!", UserWarning)
@@ -42,8 +66,8 @@ class VideoTracker(object):
             self.im_height = frame.shape[1]
 
         else:
-            assert os.path.isfile(self.args.VIDEO_PATH), "Error: path error"
-            self.vdo.open(self.args.VIDEO_PATH)
+            assert os.path.isfile(self.video_path), "Path error"
+            self.vdo.open(self.video_path)
             self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
             self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
             assert self.vdo.isOpened()
@@ -61,6 +85,7 @@ class VideoTracker(object):
 
 
     def run(self):
+        results = []
         idx_frame = 0
         while self.vdo.grab():
             idx_frame += 1
@@ -86,9 +111,15 @@ class VideoTracker(object):
 
                 # draw boxes for visualization
                 if len(outputs) > 0:
+                    bbox_tlwh = []
                     bbox_xyxy = outputs[:,:4]
                     identities = outputs[:,-1]
                     ori_im = draw_boxes(ori_im, bbox_xyxy, identities)
+
+                    for bb_xyxy in bbox_xyxy:
+                        bbox_tlwh.append(self.deepsort._xyxy_to_tlwh(bb_xyxy))
+
+                    results.append((idx_frame-1, bbox_tlwh, identities))
 
             end = time.time()
             print("time: {:.03f}s, fps: {:.03f}".format(end-start, 1/(end-start)))
@@ -99,6 +130,9 @@ class VideoTracker(object):
 
             if self.args.save_path:
                 self.writer.write(ori_im)
+
+            # save results
+            write_results(self.result_filename, results, 'mot')
 
 
 def parse_args():
@@ -122,5 +156,5 @@ if __name__=="__main__":
     cfg.merge_from_file(args.config_detection)
     cfg.merge_from_file(args.config_deepsort)
 
-    with VideoTracker(cfg, args) as vdo_trk:
+    with VideoTracker(cfg, args, video_path=args.VIDEO_PATH) as vdo_trk:
         vdo_trk.run()
