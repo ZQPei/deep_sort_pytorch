@@ -10,36 +10,17 @@ from detector import build_detector
 from deep_sort import build_tracker
 from utils.draw import draw_boxes
 from utils.parser import get_config
-from utils.log import logger
-
-def write_results(filename, results, data_type):
-    if data_type == 'mot':
-        save_format = '{frame},{id},{x1},{y1},{w},{h},-1,-1,-1,-1\n'
-    elif data_type == 'kitti':
-        save_format = '{frame} {id} pedestrian 0 0 -10 {x1} {y1} {x2} {y2} -10 -10 -10 -1000 -1000 -1000 -10\n'
-    else:
-        raise ValueError(data_type)
-
-    with open(filename, 'w') as f:
-        for frame_id, tlwhs, track_ids in results:
-            if data_type == 'kitti':
-                frame_id -= 1
-            for tlwh, track_id in zip(tlwhs, track_ids):
-                if track_id < 0:
-                    continue
-                x1, y1, w, h = tlwh
-                x2, y2 = x1 + w, y1 + h
-                line = save_format.format(frame=frame_id, id=track_id, x1=x1, y1=y1, x2=x2, y2=y2, w=w, h=h)
-                f.write(line)
-    logger.info('save results to {}'.format(filename))
+from utils.log import get_logger
+from utils.io import write_results
 
 
 class VideoTracker(object):
-    def __init__(self, cfg, args, video_path, result_filename="results"):
+    def __init__(self, cfg, args, video_path):
         self.cfg = cfg
         self.args = args
-        self.result_filename = result_filename
         self.video_path = video_path
+        self.logger = get_logger("root")
+
         use_cuda = args.use_cuda and torch.cuda.is_available()
         if not use_cuda:
             warnings.warn("Running in cpu mode which maybe very slow!", UserWarning)
@@ -73,8 +54,18 @@ class VideoTracker(object):
             assert self.vdo.isOpened()
 
         if self.args.save_path:
+            os.makedirs(self.args.save_path, exist_ok=True)
+
+            # path of saved video and results
+            self.save_video_path = os.path.join(self.args.save_path, "results.avi")
+            self.save_results_path = os.path.join(self.args.save_path, "results.txt")
+
+            # create video writer
             fourcc =  cv2.VideoWriter_fourcc(*'MJPG')
-            self.writer = cv2.VideoWriter(self.args.save_path, fourcc, 20, (self.im_width,self.im_height))
+            self.writer = cv2.VideoWriter(self.save_video_path, fourcc, 20, (self.im_width,self.im_height))
+
+            # logging
+            self.logger.info("Save results to {}".format(self.args.save_path))
 
         return self
 
@@ -98,31 +89,31 @@ class VideoTracker(object):
 
             # do detection
             bbox_xywh, cls_conf, cls_ids = self.detector(im)
-            if bbox_xywh is not None:
-                # select person class
-                mask = cls_ids==0
 
-                bbox_xywh = bbox_xywh[mask]
-                bbox_xywh[:,3:] *= 1.2 # bbox dilation just in case bbox too small
-                cls_conf = cls_conf[mask]
+            # select person class
+            mask = cls_ids==0
 
-                # do tracking
-                outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
+            bbox_xywh = bbox_xywh[mask]
+            # bbox dilation just in case bbox too small, delete this line if using a better pedestrian detector
+            bbox_xywh[:,3:] *= 1.2 
+            cls_conf = cls_conf[mask]
 
-                # draw boxes for visualization
-                if len(outputs) > 0:
-                    bbox_tlwh = []
-                    bbox_xyxy = outputs[:,:4]
-                    identities = outputs[:,-1]
-                    ori_im = draw_boxes(ori_im, bbox_xyxy, identities)
+            # do tracking
+            outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
 
-                    for bb_xyxy in bbox_xyxy:
-                        bbox_tlwh.append(self.deepsort._xyxy_to_tlwh(bb_xyxy))
+            # draw boxes for visualization
+            if len(outputs) > 0:
+                bbox_tlwh = []
+                bbox_xyxy = outputs[:,:4]
+                identities = outputs[:,-1]
+                ori_im = draw_boxes(ori_im, bbox_xyxy, identities)
 
-                    results.append((idx_frame-1, bbox_tlwh, identities))
+                for bb_xyxy in bbox_xyxy:
+                    bbox_tlwh.append(self.deepsort._xyxy_to_tlwh(bb_xyxy))
+
+                results.append((idx_frame-1, bbox_tlwh, identities))
 
             end = time.time()
-            print("time: {:.03f}s, fps: {:.03f}".format(end-start, 1/(end-start)))
 
             if self.args.display:
                 cv2.imshow("test", ori_im)
@@ -132,7 +123,11 @@ class VideoTracker(object):
                 self.writer.write(ori_im)
 
             # save results
-            write_results(self.result_filename, results, 'mot')
+            write_results(self.save_results_path, results, 'mot')
+
+            # logging
+            self.logger.info("time: {:.03f}s, fps: {:.03f}, detection numbers: {}, tracking numbers: {}" \
+                            .format(end-start, 1/(end-start), bbox_xywh.shape[0], len(outputs)))
 
 
 def parse_args():
@@ -140,11 +135,12 @@ def parse_args():
     parser.add_argument("VIDEO_PATH", type=str)
     parser.add_argument("--config_detection", type=str, default="./configs/yolov3.yaml")
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
-    parser.add_argument("--ignore_display", dest="display", action="store_false", default=True)
+    # parser.add_argument("--ignore_display", dest="display", action="store_false", default=True)
+    parser.add_argument("--display", action="store_true")
     parser.add_argument("--frame_interval", type=int, default=1)
     parser.add_argument("--display_width", type=int, default=800)
     parser.add_argument("--display_height", type=int, default=600)
-    parser.add_argument("--save_path", type=str, default="./demo/demo.avi")
+    parser.add_argument("--save_path", type=str, default="./output/")
     parser.add_argument("--cpu", dest="use_cuda", action="store_false", default=True)
     parser.add_argument("--camera", action="store", dest="cam", type=int, default="-1")
     return parser.parse_args()

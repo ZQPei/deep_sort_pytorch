@@ -1,5 +1,5 @@
 import torch
-# import time
+import logging
 import numpy as np
 import cv2
 
@@ -13,7 +13,8 @@ class YOLOv3(object):
         # net definition
         self.net = Darknet(cfgfile)
         self.net.load_weights(weightfile)
-        print('Loading weights from %s... Done!' % (weightfile))
+        logger = logging.getLogger("root.detector")
+        logger.info('Loading weights from %s... Done!' % (weightfile))
         self.device = "cuda" if use_cuda else "cpu"
         self.net.eval()
         self.net.to(self.device)
@@ -47,17 +48,19 @@ class YOLOv3(object):
             boxes = boxes[boxes[:,-2]>self.score_thresh, :] # bbox xmin ymin xmax ymax
 
         if len(boxes)==0:
-            return None,None,None
-        
-        height , width = ori_img.shape[:2]
-        bbox = boxes[:,:4]
-        if self.is_xywh:
-            # bbox x y w h
-            bbox = xyxy_to_xywh(bbox)
+            bbox = torch.FloatTensor([]).reshape([0,4])
+            cls_conf = torch.FloatTensor([])
+            cls_ids = torch.LongTensor([])
+        else:
+            height , width = ori_img.shape[:2]
+            bbox = boxes[:,:4]
+            if self.is_xywh:
+                # bbox x y w h
+                bbox = xyxy_to_xywh(bbox)
 
-        bbox = bbox * torch.FloatTensor([[width, height, width, height]])
-        cls_conf = boxes[:,5]
-        cls_ids = boxes[:,6].long()
+            bbox = bbox * torch.FloatTensor([[width, height, width, height]])
+            cls_conf = boxes[:,5]
+            cls_ids = boxes[:,6].long()
         return bbox.numpy(), cls_conf.numpy(), cls_ids.numpy()
 
     def load_class_names(self,namesfile):

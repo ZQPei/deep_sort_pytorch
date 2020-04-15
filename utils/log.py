@@ -10,9 +10,8 @@ def get_logger(name='root'):
     handler.setFormatter(formatter)
 
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     logger.addHandler(handler)
     return logger
 
 
-logger = get_logger('root')
