@@ -1,1 +1,1 @@
-python yolov3_deepsort.py ~/Videos/mot1606.avi --config_detection ./configs/yolov3_tiny.yaml --ignore_display 
+python yolov3_deepsort.py [VIDEO_PATH] --config_detection
