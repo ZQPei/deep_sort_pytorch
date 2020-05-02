@@ -8,3 +8,4 @@ sklearn
 vizer
 pyyaml
 easydict
+tqdm
