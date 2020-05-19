@@ -11,7 +11,7 @@ from deep_sort import build_tracker
 from utils.draw import draw_boxes
 from utils.parser import get_config
 from utils.log import get_logger
-from utils.io import write_results
+from utils.io_ import write_results
 
 
 class VideoTracker(object):
