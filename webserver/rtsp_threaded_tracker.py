@@ -1,3 +1,4 @@
+import warnings
 from os import getenv
 import sys
 from os.path import dirname, abspath
@@ -12,7 +13,7 @@ from utils.draw import compute_color_for_labels
 from concurrent.futures import ThreadPoolExecutor
 from redis import Redis
 
-redis_cache = Redis('111.222.333.444')
+redis_cache = Redis('127.0.0.1')
 
 
 class RealTimeTracking(object):
@@ -34,7 +35,7 @@ class RealTimeTracking(object):
         use_cuda = self.args.use_cuda and torch.cuda.is_available()
 
         if not use_cuda:
-            raise UserWarning("Running in cpu mode!")
+            warnings.warn(UserWarning("Running in cpu mode!"))
 
         self.detector = build_detector(cfg, use_cuda=use_cuda)
         self.deepsort = build_tracker(cfg, use_cuda=use_cuda)
@@ -50,7 +51,6 @@ class RealTimeTracking(object):
 
         self.thread = ThreadPoolExecutor(max_workers=1)
         self.thread.submit(self.update)
-        print('streaming started ...')
 
     def update(self):
         while True:
@@ -58,7 +58,8 @@ class RealTimeTracking(object):
                 (self.status, self.frame) = self.vdo.read()
 
     def run(self):
-        while getenv('tracking') != 'off':
+        print('streaming started ...')
+        while getenv('in_progress') != 'off':
             try:
                 frame = self.frame.copy()
                 self.detection(frame=frame)
@@ -66,6 +67,8 @@ class RealTimeTracking(object):
                 redis_cache.set('frame', frame_to_bytes)
             except AttributeError:
                 pass
+        print('streaming stopped ...')
+
 
     def detection(self, frame):
         im = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
