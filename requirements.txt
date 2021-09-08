@@ -18,7 +18,7 @@ opencv-python==4.2.0.34
 openpyxl==3.0.3
 packaging==20.3
 pandas==1.0.3
-Pillow==7.1.1
+Pillow==8.3.2
 pluggy==0.13.1
 py==1.8.1
 py-cpuinfo==5.0.0
