@@ -20,7 +20,7 @@ packaging==20.3
 pandas==1.0.3
 Pillow==7.1.1
 pluggy==0.13.1
-py==1.8.1
+py==1.10.0
 py-cpuinfo==5.0.0
 pycodestyle==2.5.0
 pyflakes==2.1.1
