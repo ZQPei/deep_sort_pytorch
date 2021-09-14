@@ -135,10 +135,12 @@ class VideoTracker(object):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("VIDEO_PATH", type=str)
+    parser.add_argument("--config_mmdetection", type=str, default="./configs/mmdet.yaml")
     parser.add_argument("--config_detection", type=str, default="./configs/yolov3.yaml")
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
     parser.add_argument("--config_fastreid", type=str, default="./configs/fastreid.yaml")
     parser.add_argument("--fastreid", action="store_true")
+    parser.add_argument("--mmdet", action="store_true")
     # parser.add_argument("--ignore_display", dest="display", action="store_false", default=True)
     parser.add_argument("--display", action="store_true")
     parser.add_argument("--frame_interval", type=int, default=1)
@@ -153,7 +155,12 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     cfg = get_config()
-    cfg.merge_from_file(args.config_detection)
+    if args.mmdet:
+        cfg.merge_from_file(args.config_mmdetection)
+        cfg.USE_MMDET = True
+    else:
+        cfg.merge_from_file(args.config_detection)
+        cfg.USE_MMDET = False
     cfg.merge_from_file(args.config_deepsort)
     if args.fastreid:
         cfg.merge_from_file(args.config_fastreid)

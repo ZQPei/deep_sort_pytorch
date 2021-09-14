@@ -1,3 +1,6 @@
 [submodule "thirdparty/fast-reid"]
 	path = thirdparty/fast-reid
 	url = https://github.com/JDAI-CV/fast-reid.git
+[submodule "thirdparty/mmdetection"]
+	path = thirdparty/mmdetection
+	url = https://github.com/open-mmlab/mmdetection.git
