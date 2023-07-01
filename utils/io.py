@@ -1,29 +1,46 @@
 import os
 from typing import Dict
 import numpy as np
+import pickle
 
 # from utils.log import get_logger
 
 
-def write_results(filename, results, data_type):
+def write_results(filename, results, data_type,masks_present=False):
     if data_type == 'mot':
-        save_format = '{frame},{id},{x1},{y1},{w},{h},-1,-1,-1,-1\n'
+        save_format = '{frame},{id},{x1},{y1},{w},{h},{label}\n'
     elif data_type == 'kitti':
         save_format = '{frame} {id} pedestrian 0 0 -10 {x1} {y1} {x2} {y2} -10 -10 -10 -1000 -1000 -1000 -10\n'
     else:
         raise ValueError(data_type)
-
-    with open(filename, 'w') as f:
-        for frame_id, tlwhs, track_ids in results:
-            if data_type == 'kitti':
-                frame_id -= 1
-            for tlwh, track_id in zip(tlwhs, track_ids):
-                if track_id < 0:
-                    continue
-                x1, y1, w, h = tlwh
-                x2, y2 = x1 + w, y1 + h
-                line = save_format.format(frame=frame_id, id=track_id, x1=x1, y1=y1, x2=x2, y2=y2, w=w, h=h)
-                f.write(line)
+    if not masks_present: # if masks are not present
+        with open(filename, 'w') as f:
+            for frame_id, tlwhs, track_ids, labels in results:
+                if data_type == 'kitti':
+                    frame_id -= 1
+                for tlwh, track_id,label in zip(tlwhs, track_ids,labels):
+                    if track_id < 0:
+                        continue
+                    x1, y1, w, h = tlwh
+                    x2, y2 = x1 + w, y1 + h
+                    line = save_format.format(frame=frame_id, id=track_id, x1=x1, y1=y1, x2=x2, y2=y2, w=w, h=h,label=label)
+                    f.write(line)
+    else:
+        with open(filename, 'w') as f:
+            for frame_id, tlwhs, track_ids,labels,masks in results:
+                if data_type == 'kitti':
+                    frame_id -= 1
+                for tlwh, track_id,label,mask in zip(tlwhs, track_ids,labels,masks):
+                    if track_id < 0:
+                        continue
+                    name = filename.rstrip("results.txt")#
+                    mask = mask.reshape(720,1280)
+                    mask = np.transpose(np.nonzero(mask>0.5))
+                    np.savetxt(f"{name}masks/{frame_id},{track_id}.csv",mask.astype(int),fmt="%i",delimiter = ',')
+                    x1, y1, w, h = tlwh
+                    x2, y2 = x1 + w, y1 + h
+                    line = save_format.format(frame=frame_id, id=track_id, x1=x1, y1=y1, x2=x2, y2=y2, w=w, h=h,label=label)
+                    f.write(line)
 
 
 # def write_results(filename, results_dict: Dict, data_type: str):

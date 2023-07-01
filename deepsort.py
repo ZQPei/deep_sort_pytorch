@@ -39,10 +39,12 @@ class VideoTracker(object):
             self.vdo = cv2.VideoCapture(args.cam)
         else:
             self.vdo = cv2.VideoCapture()
-        self.detector = build_detector(cfg, use_cuda=use_cuda)
+        self.detector = build_detector(cfg, use_cuda=use_cuda,segment=self.args.segment)
         self.deepsort = build_tracker(cfg, use_cuda=use_cuda)
-        self.class_names = self.detector.class_names
-
+        try:
+            self.class_names = self.detector.class_names
+        except:
+            pass 
     def __enter__(self):
         if self.args.cam != -1:
             ret, frame = self.vdo.read()
@@ -59,7 +61,7 @@ class VideoTracker(object):
 
         if self.args.save_path:
             os.makedirs(self.args.save_path, exist_ok=True)
-
+            os.makedirs(self.args.save_path+"/masks", exist_ok=True)
             # path of saved video and results
             self.save_video_path = os.path.join(self.args.save_path, "results.avi")
             self.save_results_path = os.path.join(self.args.save_path, "results.txt")
@@ -90,31 +92,47 @@ class VideoTracker(object):
             im = cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB)
 
             # do detection
-            bbox_xywh, cls_conf, cls_ids = self.detector(im)
-
-            # select person class
-            mask = cls_ids == 0
-
-            bbox_xywh = bbox_xywh[mask]
+            
+            if self.args.segment:
+                bbox_xywh, cls_conf, cls_ids,segm_masks = self.detector(im)
+            else:
+                bbox_xywh, cls_conf, cls_ids = self.detector(im)
+            
+            # select all classes specified by user
+            class_mask = (cls_ids == self.args.classes[0])
+            for class_ in self.args.classes:
+                class_mask = (class_mask)|(cls_ids == class_)
+            
+            bbox_xywh = bbox_xywh[class_mask]
             # bbox dilation just in case bbox too small, delete this line if using a better pedestrian detector
             bbox_xywh[:, 3:] *= 1.2
-            cls_conf = cls_conf[mask]
+            cls_conf = cls_conf[class_mask]
+            cls_ids = cls_ids[class_mask]
 
             # do tracking
-            outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
+            if self.args.segment:
+                segm_masks = segm_masks[class_mask] 
+                outputs,mask_output = self.deepsort.update(bbox_xywh, cls_conf,im,cls_ids,segm_masks) 
+            else:
+                outputs,mask_output = self.deepsort.update(bbox_xywh, cls_conf, im,cls_ids) #
 
             # draw boxes for visualization
             if len(outputs) > 0:
                 bbox_tlwh = []
                 bbox_xyxy = outputs[:, :4]
-                identities = outputs[:, -1]
+
+                identities = outputs[:, -2]
+                labels = outputs[:, -1]
                 ori_im = draw_boxes(ori_im, bbox_xyxy, identities)
 
                 for bb_xyxy in bbox_xyxy:
                     bbox_tlwh.append(self.deepsort._xyxy_to_tlwh(bb_xyxy))
 
-                results.append((idx_frame - 1, bbox_tlwh, identities))
-
+                
+                if self.args.segment:
+                    results.append((idx_frame - 1, bbox_tlwh, identities,labels,mask_output))
+                else:
+                    results.append((idx_frame - 1, bbox_tlwh, identities,labels))
             end = time.time()
 
             if self.args.display:
@@ -125,7 +143,7 @@ class VideoTracker(object):
                 self.writer.write(ori_im)
 
             # save results
-            write_results(self.save_results_path, results, 'mot')
+            write_results(self.save_results_path, results, 'mot',self.args.segment)
 
             # logging
             self.logger.info("time: {:.03f}s, fps: {:.03f}, detection numbers: {}, tracking numbers: {}" \
@@ -141,6 +159,9 @@ def parse_args():
     parser.add_argument("--config_fastreid", type=str, default="./configs/fastreid.yaml")
     parser.add_argument("--fastreid", action="store_true")
     parser.add_argument("--mmdet", action="store_true")
+    parser.add_argument("--maskrcnn", action="store_true")
+    parser.add_argument("--segment", action="store_true",default=False)
+    parser.add_argument('--classes', nargs='+', type=int, default=[0])
     # parser.add_argument("--ignore_display", dest="display", action="store_false", default=True)
     parser.add_argument("--display", action="store_true")
     parser.add_argument("--frame_interval", type=int, default=1)
@@ -155,6 +176,8 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     cfg = get_config()
+    if args.maskrcnn:
+        cfg.USE_MASKRCNN = True
     if args.mmdet:
         cfg.merge_from_file(args.config_mmdetection)
         cfg.USE_MMDET = True
