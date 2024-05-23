@@ -8,7 +8,7 @@ Changes
 - refactor code
 - accerate detection by adding nms on gpu
 
-## Latest Update(07-22)
+## Update(07-22)
 Changes
 - bug fix (Thanks @JieChen91 and @yingsen1 for bug reporting).  
 - using batch for feature extracting for each frame, which lead to a small speed up.  
@@ -18,6 +18,24 @@ Futher improvement direction
 - Train detector on specific dataset rather than the official one.
 - Retrain REID model on pedestrain dataset for better performance.
 - Replace YOLOv3 detector with advanced ones.
+
+## Latest Update(23-05-2024)
+
+### tracking 
+
+- Added resnet network to the appearance feature extraction network in the deep folder
+
+- modified the NMS bug in the preprocessing.py and the updated covariance calculation bug in the kalmen_filter.py in the sort folder
+
+### detecting
+
+- Added YOLOv5 detector, aligned interface, and added YOLOv5 related yaml configuration files
+
+- The train.py, val.py and detect.py in the original YOLOv5 were deleted
+
+### deepsort
+
+- Added tracking target category, which can display both category and tracking ID simultaneously
 
 **Any contributions to this repository is welcome!**
 
@@ -67,7 +85,7 @@ cd deep_sort/deep/checkpoint
 # download ckpt.t7 from
 https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6 to this folder
 cd ../../../
-```  
+```
 
 4. Compile nms module
 ```bash
