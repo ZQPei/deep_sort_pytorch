@@ -4,11 +4,10 @@ import time
 import argparse
 import torch
 import warnings
-import numpy as np
+import json
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'thirdparty/fast-reid'))
-
 
 from detector import build_detector
 from deep_sort import build_tracker
@@ -16,7 +15,6 @@ from utils.draw import draw_boxes
 from utils.parser import get_config
 from utils.log import get_logger
 from utils.io import write_results
-
 
 
 class VideoTracker(object):
@@ -80,6 +78,8 @@ class VideoTracker(object):
     def run(self):
         results = []
         idx_frame = 0
+        with open('coco_classes.json', 'r') as f:
+            idx_to_class = json.load(f)
         while self.vdo.grab():
             idx_frame += 1
             if idx_frame % self.args.frame_interval:
@@ -97,23 +97,26 @@ class VideoTracker(object):
 
             bbox_xywh = bbox_xywh[mask]
             # bbox dilation just in case bbox too small, delete this line if using a better pedestrian detector
-            bbox_xywh[:, 3:] *= 1.2
+            bbox_xywh[:, 2:] *= 1.2
             cls_conf = cls_conf[mask]
+            cls_ids = cls_ids[mask]
 
             # do tracking
-            outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
+            outputs = self.deepsort.update(bbox_xywh, cls_conf, cls_ids, im)
 
             # draw boxes for visualization
             if len(outputs) > 0:
                 bbox_tlwh = []
                 bbox_xyxy = outputs[:, :4]
                 identities = outputs[:, -1]
-                ori_im = draw_boxes(ori_im, bbox_xyxy, identities)
+                cls = outputs[:, -2]
+                names = [idx_to_class[str(label)] for label in cls]
+                ori_im = draw_boxes(ori_im, bbox_xyxy, names, identities)
 
                 for bb_xyxy in bbox_xyxy:
                     bbox_tlwh.append(self.deepsort._xyxy_to_tlwh(bb_xyxy))
 
-                results.append((idx_frame - 1, bbox_tlwh, identities))
+                results.append((idx_frame - 1, bbox_tlwh, identities, cls))
 
             end = time.time()
 
@@ -134,9 +137,9 @@ class VideoTracker(object):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("VIDEO_PATH", type=str)
+    parser.add_argument("--VIDEO_PATH", type=str, default='demo.avi')
     parser.add_argument("--config_mmdetection", type=str, default="./configs/mmdet.yaml")
-    parser.add_argument("--config_detection", type=str, default="./configs/yolov3.yaml")
+    parser.add_argument("--config_detection", type=str, default="./configs/yolov5m.yaml")
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
     parser.add_argument("--config_fastreid", type=str, default="./configs/fastreid.yaml")
     parser.add_argument("--fastreid", action="store_true")

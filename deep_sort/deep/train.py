@@ -143,7 +143,7 @@ def test(epoch):
             os.mkdir('checkpoint')
         torch.save(checkpoint, './checkpoint/ckpt.t7')
 
-    return test_loss/len(testloader), 1.- correct/total
+    return test_loss/len(testloader), 1. - correct/total
 
 # plot figure
 x_epoch = []

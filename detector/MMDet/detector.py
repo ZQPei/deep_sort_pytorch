@@ -5,9 +5,10 @@ import torch
 from mmdet.apis import init_detector, inference_detector
 from .mmdet_utils import xyxy_to_xywh
 
+
 class MMDet(object):
     def __init__(self, cfg_file, checkpoint_file, score_thresh=0.7,
-                is_xywh=False, use_cuda=True):
+                 is_xywh=False, use_cuda=True):
         # net definition
         self.device = "cuda" if use_cuda else "cpu"
         self.net = init_detector(cfg_file, checkpoint_file, device=self.device)
@@ -49,7 +50,3 @@ class MMDet(object):
             bbox = xyxy_to_xywh(bbox)
 
         return bbox, cls_conf, cls_ids
-
-
-            
-

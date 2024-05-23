@@ -1,0 +1,9 @@
+YOLOV5:
+  CFG: "./detector/YOLOv5/models/yolov5x.yaml"
+  WEIGHT: "./detector/YOLOv5/yolov5x.pt"
+  DATA: './detector/YOLOv5/data/coco128.yaml'
+
+  IMGSZ: [640, 640]
+  SCORE_THRESH: 0.25
+  NMS_THRESH: 0.45
+  MAX_DET: 100

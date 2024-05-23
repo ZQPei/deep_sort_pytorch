@@ -181,8 +181,10 @@ class KalmanFilter(object):
         innovation = measurement - projected_mean
 
         new_mean = mean + np.dot(innovation, kalman_gain.T)
+        # new_covariance = covariance - np.linalg.multi_dot((
+        #     kalman_gain, projected_cov, kalman_gain.T))
         new_covariance = covariance - np.linalg.multi_dot((
-            kalman_gain, projected_cov, kalman_gain.T))
+            kalman_gain, self._update_mat, covariance))
         return new_mean, new_covariance
 
     def gating_distance(self, mean, covariance, measurements,
