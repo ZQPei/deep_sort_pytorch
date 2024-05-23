@@ -9,14 +9,15 @@ import torch.backends.cudnn as cudnn
 import torchvision
 
 from model import Net
+from resnet import resnet18
 
 parser = argparse.ArgumentParser(description="Train on market1501")
-parser.add_argument("--data-dir",default='data',type=str)
-parser.add_argument("--no-cuda",action="store_true")
-parser.add_argument("--gpu-id",default=0,type=int)
-parser.add_argument("--lr",default=0.1, type=float)
-parser.add_argument("--interval",'-i',default=20,type=int)
-parser.add_argument('--resume', '-r',action='store_true')
+parser.add_argument("--data-dir", default='data', type=str)
+parser.add_argument("--no-cuda", action="store_true")
+parser.add_argument("--gpu-id", default=0, type=int)
+parser.add_argument("--lr", default=0.1, type=float)
+parser.add_argument("--interval", '-i', default=20, type=int)
+parser.add_argument('--resume', '-r', action='store_true')
 args = parser.parse_args()
 
 # device
@@ -26,28 +27,29 @@ if torch.cuda.is_available() and not args.no_cuda:
 
 # data loading
 root = args.data_dir
-train_dir = os.path.join(root,"train")
-test_dir = os.path.join(root,"test")
+train_dir = os.path.join(root, "train")
+test_dir = os.path.join(root, "test")
 transform_train = torchvision.transforms.Compose([
-    torchvision.transforms.RandomCrop((128,64),padding=4),
+    torchvision.transforms.RandomCrop((128, 64), padding=4),
     torchvision.transforms.RandomHorizontalFlip(),
     torchvision.transforms.ToTensor(),
     torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 transform_test = torchvision.transforms.Compose([
-    torchvision.transforms.Resize((128,64)),
+    torchvision.transforms.Resize((128, 64)),
     torchvision.transforms.ToTensor(),
     torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
-trainloader = torch.utils.data.DataLoader(
+
+train_loader = torch.utils.data.DataLoader(
     torchvision.datasets.ImageFolder(train_dir, transform=transform_train),
-    batch_size=64,shuffle=True
+    batch_size=64, shuffle=True
 )
-testloader = torch.utils.data.DataLoader(
+test_loader = torch.utils.data.DataLoader(
     torchvision.datasets.ImageFolder(test_dir, transform=transform_test),
-    batch_size=64,shuffle=True
+    batch_size=64, shuffle=False
 )
-num_classes = max(len(trainloader.dataset.classes), len(testloader.dataset.classes))
+num_classes = max(len(train_loader.dataset.classes), len(test_loader.dataset.classes))
 
 # net definition
 start_epoch = 0
@@ -57,7 +59,7 @@ if args.resume:
     print('Loading from checkpoint/ckpt.t7')
     checkpoint = torch.load("./checkpoint/ckpt.t7")
     # import ipdb; ipdb.set_trace()
-    net_dict = checkpoint['net_dict']
+    net_dict = checkpoint if 'net_dict' not in checkpoint else checkpoint['net_dict']
     net.load_state_dict(net_dict)
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
@@ -68,9 +70,10 @@ criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(net.parameters(), args.lr, momentum=0.9, weight_decay=5e-4)
 best_acc = 0.
 
+
 # train function for each epoch
 def train(epoch):
-    print("\nEpoch : %d"%(epoch+1))
+    print("\nEpoch : %d" % (epoch + 1))
     net.train()
     training_loss = 0.
     train_loss = 0.
@@ -78,9 +81,9 @@ def train(epoch):
     total = 0
     interval = args.interval
     start = time.time()
-    for idx, (inputs, labels) in enumerate(trainloader):
+    for idx, (inputs, labels) in enumerate(train_loader):
         # forward
-        inputs,labels = inputs.to(device),labels.to(device)
+        inputs, labels = inputs.to(device), labels.to(device)
         outputs = net(inputs)
         loss = criterion(outputs, labels)
 
@@ -96,15 +99,17 @@ def train(epoch):
         total += labels.size(0)
 
         # print 
-        if (idx+1)%interval == 0:
+        if (idx + 1) % interval == 0:
             end = time.time()
             print("[progress:{:.1f}%]time:{:.2f}s Loss:{:.5f} Correct:{}/{} Acc:{:.3f}%".format(
-                100.*(idx+1)/len(trainloader), end-start, training_loss/interval, correct, total, 100.*correct/total
+                100. * (idx + 1) / len(train_loader), end - start, training_loss / interval, correct, total,
+                100. * correct / total
             ))
             training_loss = 0.
             start = time.time()
-    
-    return train_loss/len(trainloader), 1.- correct/total
+
+    return train_loss / len(train_loader), 1. - correct / total
+
 
 def test(epoch):
     global best_acc
@@ -114,7 +119,7 @@ def test(epoch):
     total = 0
     start = time.time()
     with torch.no_grad():
-        for idx, (inputs, labels) in enumerate(testloader):
+        for idx, (inputs, labels) in enumerate(test_loader):
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = net(inputs)
             loss = criterion(outputs, labels)
@@ -122,35 +127,39 @@ def test(epoch):
             test_loss += loss.item()
             correct += outputs.max(dim=1)[1].eq(labels).sum().item()
             total += labels.size(0)
-        
+
         print("Testing ...")
         end = time.time()
         print("[progress:{:.1f}%]time:{:.2f}s Loss:{:.5f} Correct:{}/{} Acc:{:.3f}%".format(
-                100.*(idx+1)/len(testloader), end-start, test_loss/len(testloader), correct, total, 100.*correct/total
-            ))
+            100. * (idx + 1) / len(test_loader), end - start, test_loss / len(test_loader), correct, total,
+            100. * correct / total
+        ))
 
     # saving checkpoint
-    acc = 100.*correct/total
+    acc = 100. * correct / total
     if acc > best_acc:
         best_acc = acc
         print("Saving parameters to checkpoint/ckpt.t7")
         checkpoint = {
-            'net_dict':net.state_dict(),
-            'acc':acc,
-            'epoch':epoch,
+            'net_dict': net.state_dict(),
+            'acc': acc,
+            'epoch': epoch,
         }
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
         torch.save(checkpoint, './checkpoint/ckpt.t7')
 
-    return test_loss/len(testloader), 1. - correct/total
+    return test_loss / len(test_loader), 1. - correct / total
+
 
 # plot figure
 x_epoch = []
-record = {'train_loss':[], 'train_err':[], 'test_loss':[], 'test_err':[]}
+record = {'train_loss': [], 'train_err': [], 'test_loss': [], 'test_err': []}
 fig = plt.figure()
 ax0 = fig.add_subplot(121, title="loss")
 ax1 = fig.add_subplot(122, title="top1err")
+
+
 def draw_curve(epoch, train_loss, train_err, test_loss, test_err):
     global record
     record['train_loss'].append(train_loss)
@@ -168,6 +177,7 @@ def draw_curve(epoch, train_loss, train_err, test_loss, test_err):
         ax1.legend()
     fig.savefig("train.jpg")
 
+
 # lr decay
 def lr_decay():
     global optimizer
@@ -176,12 +186,13 @@ def lr_decay():
         lr = params['lr']
         print("Learning rate adjusted to {}".format(lr))
 
+
 def main():
-    for epoch in range(start_epoch, start_epoch+40):
+    for epoch in range(start_epoch, start_epoch + 40):
         train_loss, train_err = train(epoch)
         test_loss, test_err = test(epoch)
         draw_curve(epoch, train_loss, train_err, test_loss, test_err)
-        if (epoch+1)%20==0:
+        if (epoch + 1) % 20 == 0:
             lr_decay()
 
 

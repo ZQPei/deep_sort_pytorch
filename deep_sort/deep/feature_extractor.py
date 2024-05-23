@@ -14,8 +14,8 @@ from .resnet import resnet18
 
 class Extractor(object):
     def __init__(self, model_path, use_cuda=True):
-        self.net = Net(reid=True)
-        # self.net = resnet18(reid=True)
+        # self.net = Net(reid=True)
+        self.net = resnet18(reid=True)
         self.device = "cuda" if torch.cuda.is_available() and use_cuda else "cpu"
         state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
         self.net.load_state_dict(state_dict if 'net_dict' not in state_dict else state_dict['net_dict'], strict=False)

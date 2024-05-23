@@ -1,5 +1,5 @@
 DEEPSORT:
-  REID_CKPT: "./deep_sort/deep/checkpoint/ckpt.t7"
+  REID_CKPT: "./deep_sort/deep/checkpoint/resnet18.pth"
   MAX_DIST: 0.2
   MIN_CONFIDENCE: 0.3
   NMS_MAX_OVERLAP: 0.5

@@ -3,15 +3,6 @@
 ![](demo/demo.gif)
 
 ## Update(1-1-2020)
-
-Changes
-
-- fix bugs
-- refactor code
-- accerate detection by adding nms on gpu
-
-## Update(1-1-2020)
-
 Changes
 - fix bugs
 - refactor code
@@ -76,7 +67,7 @@ cd deep_sort/deep/checkpoint
 # download ckpt.t7 from
 https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6 to this folder
 cd ../../../
-```
+```  
 
 4. Compile nms module
 ```bash
