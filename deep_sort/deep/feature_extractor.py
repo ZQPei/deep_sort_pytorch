@@ -6,11 +6,10 @@ import logging
 
 from .model import Net
 from .resnet import resnet18
-
-
 # from fastreid.config import get_cfg
 # from fastreid.engine import DefaultTrainer
 # from fastreid.utils.checkpoint import Checkpointer
+
 
 class Extractor(object):
     def __init__(self, model_path, use_cuda=True):
