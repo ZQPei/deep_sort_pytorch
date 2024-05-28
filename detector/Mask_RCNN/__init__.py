@@ -1,1 +1,1 @@
-from .maskrcnn import MaskRCNN
+from .maskrcnn import Mask_RCNN

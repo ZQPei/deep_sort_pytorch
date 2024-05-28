@@ -77,7 +77,7 @@ def draw_text(draw,
 
 def draw_masks(image, masks, colors, thresh: float = 0.7, alpha: float = 0.5):
     np_image = np.array(image)
-    masks = masks > thresh
+    masks = np.where(masks > thresh, True, False)
 
     # colors = np.array(colors)
     img_to_draw = np.copy(np_image)

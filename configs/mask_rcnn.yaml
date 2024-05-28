@@ -1,0 +1,6 @@
+MASKRCNN:
+  LABEL: "./coco_classes.json"
+  WEIGHT: "./detector/Mask_RCNN/save_weights/maskrcnn_resnet50_fpn_coco.pth"
+
+  NUM_CLASSES: 90
+  BOX_THRESH: 0.5
