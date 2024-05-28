@@ -159,7 +159,7 @@ class Mask_RCNN:
         self.model = create_model(num_classes=self.num_classes + 1, box_thresh=self.box_thresh)
 
         # load train weights
-        assert os.path.exists(self.weight_path), "{} file dose not exist.".format(weights_path)
+        assert os.path.exists(self.weight_path), "{} file dose not exist.".format(self.weight_path)
         weights_dict = torch.load(self.weight_path, map_location='cpu')
         weights_dict = weights_dict["model"] if "model" in weights_dict else weights_dict
         self.model.load_state_dict(weights_dict)
