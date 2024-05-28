@@ -64,7 +64,7 @@ class Track:
     """
 
     def __init__(self, mean, covariance, track_id, n_init, max_age,
-                 feature=None, cls=None):
+                 feature=None, cls=None, mask=None):
         self.mean = mean
         self.covariance = covariance
         self.track_id = track_id
@@ -74,6 +74,7 @@ class Track:
 
         self.state = TrackState.Tentative
         self.cls = cls
+        self.mask = mask
         self.features = []
         if feature is not None:
             self.features.append(feature)
@@ -136,6 +137,7 @@ class Track:
             The associated detection.
 
         """
+        self.mask = detection.mask
         self.mean, self.covariance = kf.update(
             self.mean, self.covariance, detection.to_xyah())
         self.features.append(detection.feature)
