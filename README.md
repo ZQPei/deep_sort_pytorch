@@ -19,7 +19,7 @@ Futher improvement direction
 - Retrain REID model on pedestrain dataset for better performance.
 - Replace YOLOv3 detector with advanced ones.
 
-## Latest Update(23-05-2024)
+## Update(23-05-2024)
 
 ### tracking 
 
@@ -31,11 +31,18 @@ Futher improvement direction
 
 - Added YOLOv5 detector, aligned interface, and added YOLOv5 related yaml configuration files
 
-- The train.py, val.py and detect.py in the original YOLOv5 were deleted
+- The train.py, val.py and detect.py in the original YOLOv5 were deleted. This repo only need yolov5x.pt
 
 ### deepsort
 
 - Added tracking target category, which can display both category and tracking ID simultaneously
+
+## Latest Update(28-05-2024)
+
+### segmentation
+
+* Added Mask RCNN instance segmentation model. Codes references this repo: [mask_rcnn](https://github.com/WZMIAOMIAO/deep-learning-for-image-processing/tree/master/pytorch_object_detection/mask_rcnn)
+* Similar to YOLOv5, train.py, validation.py and predict.py were deleted. This repo only need maskrcnn_resnet50_fpn_coco.pth.
 
 **Any contributions to this repository is welcome!**
 
@@ -55,6 +62,7 @@ However in original code, the CNN model is implemented with tensorflow, which I'
 - pillow
 - vizer
 - edict
+- matplotlib
 
 ## Quick Start
 0. Check all dependencies installed

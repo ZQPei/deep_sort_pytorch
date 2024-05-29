@@ -25,12 +25,13 @@ class DeepSort(object):
         metric = NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
         self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
 
-    def update(self, bbox_xywh, confidences, classes, ori_img):
+    def update(self, bbox_xywh, confidences, classes, ori_img, masks=None):
         self.height, self.width = ori_img.shape[:2]
         # generate detections
         features = self._get_features(bbox_xywh, ori_img)
         bbox_tlwh = self._xywh_to_tlwh(bbox_xywh)
-        detections = [Detection(bbox_tlwh[i], conf, label, features[i]) for i, (conf, label) in enumerate(zip(confidences, classes))
+        detections = [Detection(bbox_tlwh[i], conf, label, features[i], None if masks is None else masks[i])
+                      for i, (conf, label) in enumerate(zip(confidences, classes))
                       if conf > self.min_confidence]
 
         # run on non-maximum supression
@@ -45,6 +46,7 @@ class DeepSort(object):
 
         # output bbox identities
         outputs = []
+        mask_outputs = []
         for track in self.tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue
@@ -53,9 +55,11 @@ class DeepSort(object):
             track_id = track.track_id
             track_cls = track.cls
             outputs.append(np.array([x1, y1, x2, y2, track_cls, track_id], dtype=np.int32))
+            if track.mask is not None:
+                mask_outputs.append(track.mask)
         if len(outputs) > 0:
             outputs = np.stack(outputs, axis=0)
-        return outputs
+        return outputs, mask_outputs
 
     """
     TODO:

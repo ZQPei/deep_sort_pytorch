@@ -37,7 +37,7 @@ class VideoTracker(object):
             self.vdo = cv2.VideoCapture(args.cam)
         else:
             self.vdo = cv2.VideoCapture()
-        self.detector = build_detector(cfg, use_cuda=use_cuda)
+        self.detector = build_detector(cfg, use_cuda=use_cuda, segment=self.args.segment)
         self.deepsort = build_tracker(cfg, use_cuda=use_cuda)
         self.class_names = self.detector.class_names
 
@@ -57,6 +57,7 @@ class VideoTracker(object):
 
         if self.args.save_path:
             os.makedirs(self.args.save_path, exist_ok=True)
+            # TODO save masks
 
             # path of saved video and results
             self.save_video_path = os.path.join(self.args.save_path, "results.avi")
@@ -90,7 +91,10 @@ class VideoTracker(object):
             im = cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB)
 
             # do detection
-            bbox_xywh, cls_conf, cls_ids = self.detector(im)
+            if self.args.segment:
+                bbox_xywh, cls_conf, cls_ids, seg_masks = self.detector(im)
+            else:
+                bbox_xywh, cls_conf, cls_ids = self.detector(im)
 
             # select person class
             mask = cls_ids == 0
@@ -102,7 +106,11 @@ class VideoTracker(object):
             cls_ids = cls_ids[mask]
 
             # do tracking
-            outputs = self.deepsort.update(bbox_xywh, cls_conf, cls_ids, im)
+            if self.args.segment:
+                seg_masks = seg_masks[mask]
+                outputs, mask_outputs = self.deepsort.update(bbox_xywh, cls_conf, cls_ids, im, seg_masks)
+            else:
+                outputs, _ = self.deepsort.update(bbox_xywh, cls_conf, cls_ids, im)
 
             # draw boxes for visualization
             if len(outputs) > 0:
@@ -111,7 +119,8 @@ class VideoTracker(object):
                 identities = outputs[:, -1]
                 cls = outputs[:, -2]
                 names = [idx_to_class[str(label)] for label in cls]
-                ori_im = draw_boxes(ori_im, bbox_xyxy, names, identities)
+
+                ori_im = draw_boxes(ori_im, bbox_xyxy, names, identities, None if not self.args.segment else mask_outputs)
 
                 for bb_xyxy in bbox_xyxy:
                     bbox_tlwh.append(self.deepsort._xyxy_to_tlwh(bb_xyxy))
@@ -139,11 +148,12 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--VIDEO_PATH", type=str, default='demo.avi')
     parser.add_argument("--config_mmdetection", type=str, default="./configs/mmdet.yaml")
-    parser.add_argument("--config_detection", type=str, default="./configs/yolov5m.yaml")
+    parser.add_argument("--config_detection", type=str, default="./configs/mask_rcnn.yaml")
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
     parser.add_argument("--config_fastreid", type=str, default="./configs/fastreid.yaml")
     parser.add_argument("--fastreid", action="store_true")
     parser.add_argument("--mmdet", action="store_true")
+    parser.add_argument("--segment", action="store_true")
     # parser.add_argument("--ignore_display", dest="display", action="store_false", default=True)
     parser.add_argument("--display", action="store_true")
     parser.add_argument("--frame_interval", type=int, default=1)
@@ -158,6 +168,10 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     cfg = get_config()
+    if args.segment:
+        cfg.USE_SEGMENT = True
+    else:
+        cfg.USE_SEGMENT = False
     if args.mmdet:
         cfg.merge_from_file(args.config_mmdetection)
         cfg.USE_MMDET = True
