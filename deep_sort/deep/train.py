@@ -127,7 +127,7 @@ def main(args):
 
     if args.freeze_layers:
         for name, param in net.named_parameters():
-            if 'fc' not in name:
+            if name not in ['fc', 'classifier']:
                 param.requires_grad = False
     else:
         if args.syncBN:
