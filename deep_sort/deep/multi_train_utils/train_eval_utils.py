@@ -41,7 +41,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
         optimizer.zero_grad()
     if device != torch.device('cpu'):
         torch.cuda.synchronize(device)
-    sum_num = reduce_value(sum_num, average=False)
+    sum_num = reduce_value(sum_num, average=True)
 
     return sum_num.item(), mean_loss.item()
 
@@ -68,6 +68,6 @@ def evaluate(model, data_loader, device):
     if device != torch.device('cpu'):
         torch.cuda.synchronize(device)
 
-    sum_num = reduce_value(sum_num, average=False)
+    sum_num = reduce_value(sum_num, average=True)
 
     return sum_num.item(), test_loss.item()
