@@ -150,7 +150,7 @@ def main(args):
         test_acc = test_pos / len(test_dataset)
 
         if rank == 0:
-            print('[epoch {}] accuracy: {}'.format(epoch, acc.item()))
+            print('[epoch {}] accuracy: {}'.format(epoch, test_acc.item()))
 
             state_dict = {
                 'net_dict': net.state_dict(),
