@@ -1,155 +1,23 @@
 import argparse
 import os
-import time
+import tempfile
 
-import numpy as np
+import math
+import warnings
 import matplotlib.pyplot as plt
 import torch
-import torch.backends.cudnn as cudnn
 import torchvision
+from torch.optim import lr_scheduler
+
+from multi_train_utils.distributed_utils import init_distributed_mode, cleanup
+from multi_train_utils.train_eval_utils import train_one_epoch, evaluate
+import torch.distributed as dist
 
 from model import Net
 from resnet import resnet18
 
-parser = argparse.ArgumentParser(description="Train on market1501")
-parser.add_argument("--data-dir", default='data', type=str)
-parser.add_argument("--no-cuda", action="store_true")
-parser.add_argument("--gpu-id", default=0, type=int)
-parser.add_argument("--lr", default=0.1, type=float)
-parser.add_argument("--interval", '-i', default=20, type=int)
-parser.add_argument('--resume', '-r', action='store_true')
-args = parser.parse_args()
-
-# device
-device = "cuda:{}".format(args.gpu_id) if torch.cuda.is_available() and not args.no_cuda else "cpu"
-if torch.cuda.is_available() and not args.no_cuda:
-    cudnn.benchmark = True
-
-# data loading
-root = args.data_dir
-train_dir = os.path.join(root, "train")
-test_dir = os.path.join(root, "test")
-transform_train = torchvision.transforms.Compose([
-    torchvision.transforms.RandomCrop((128, 64), padding=4),
-    torchvision.transforms.RandomHorizontalFlip(),
-    torchvision.transforms.ToTensor(),
-    torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
-transform_test = torchvision.transforms.Compose([
-    torchvision.transforms.Resize((128, 64)),
-    torchvision.transforms.ToTensor(),
-    torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
-
-train_loader = torch.utils.data.DataLoader(
-    torchvision.datasets.ImageFolder(train_dir, transform=transform_train),
-    batch_size=64, shuffle=True
-)
-test_loader = torch.utils.data.DataLoader(
-    torchvision.datasets.ImageFolder(test_dir, transform=transform_test),
-    batch_size=64, shuffle=False
-)
-num_classes = max(len(train_loader.dataset.classes), len(test_loader.dataset.classes))
-
-# net definition
-start_epoch = 0
-net = Net(num_classes=num_classes)
-if args.resume:
-    assert os.path.isfile("./checkpoint/ckpt.t7"), "Error: no checkpoint file found!"
-    print('Loading from checkpoint/ckpt.t7')
-    checkpoint = torch.load("./checkpoint/ckpt.t7")
-    # import ipdb; ipdb.set_trace()
-    net_dict = checkpoint if 'net_dict' not in checkpoint else checkpoint['net_dict']
-    net.load_state_dict(net_dict)
-    best_acc = checkpoint['acc']
-    start_epoch = checkpoint['epoch']
-net.to(device)
-
-# loss and optimizer
-criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(net.parameters(), args.lr, momentum=0.9, weight_decay=5e-4)
-best_acc = 0.
 
 
-# train function for each epoch
-def train(epoch):
-    print("\nEpoch : %d" % (epoch + 1))
-    net.train()
-    training_loss = 0.
-    train_loss = 0.
-    correct = 0
-    total = 0
-    interval = args.interval
-    start = time.time()
-    for idx, (inputs, labels) in enumerate(train_loader):
-        # forward
-        inputs, labels = inputs.to(device), labels.to(device)
-        outputs = net(inputs)
-        loss = criterion(outputs, labels)
-
-        # backward
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        # accumurating
-        training_loss += loss.item()
-        train_loss += loss.item()
-        correct += outputs.max(dim=1)[1].eq(labels).sum().item()
-        total += labels.size(0)
-
-        # print 
-        if (idx + 1) % interval == 0:
-            end = time.time()
-            print("[progress:{:.1f}%]time:{:.2f}s Loss:{:.5f} Correct:{}/{} Acc:{:.3f}%".format(
-                100. * (idx + 1) / len(train_loader), end - start, training_loss / interval, correct, total,
-                100. * correct / total
-            ))
-            training_loss = 0.
-            start = time.time()
-
-    return train_loss / len(train_loader), 1. - correct / total
-
-
-def test(epoch):
-    global best_acc
-    net.eval()
-    test_loss = 0.
-    correct = 0
-    total = 0
-    start = time.time()
-    with torch.no_grad():
-        for idx, (inputs, labels) in enumerate(test_loader):
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = net(inputs)
-            loss = criterion(outputs, labels)
-
-            test_loss += loss.item()
-            correct += outputs.max(dim=1)[1].eq(labels).sum().item()
-            total += labels.size(0)
-
-        print("Testing ...")
-        end = time.time()
-        print("[progress:{:.1f}%]time:{:.2f}s Loss:{:.5f} Correct:{}/{} Acc:{:.3f}%".format(
-            100. * (idx + 1) / len(test_loader), end - start, test_loss / len(test_loader), correct, total,
-            100. * correct / total
-        ))
-
-    # saving checkpoint
-    acc = 100. * correct / total
-    if acc > best_acc:
-        best_acc = acc
-        print("Saving parameters to checkpoint/ckpt.t7")
-        checkpoint = {
-            'net_dict': net.state_dict(),
-            'acc': acc,
-            'epoch': epoch,
-        }
-        if not os.path.isdir('checkpoint'):
-            os.mkdir('checkpoint')
-        torch.save(checkpoint, './checkpoint/ckpt.t7')
-
-    return test_loss / len(test_loader), 1. - correct / total
 
 
 # plot figure
@@ -178,23 +46,149 @@ def draw_curve(epoch, train_loss, train_err, test_loss, test_err):
     fig.savefig("train.jpg")
 
 
-# lr decay
-def lr_decay():
-    global optimizer
-    for params in optimizer.param_groups:
-        params['lr'] *= 0.1
-        lr = params['lr']
-        print("Learning rate adjusted to {}".format(lr))
+
+def main(args):
+    init_distributed_mode(args)
+
+    rank = args.rank
+    device = torch.device(args.device)
+    batch_size = args.batch_size
+    weights_path = args.weights
+    args.lr *= args.world_size
+    checkpoint_path = ''
+
+    if rank == 0:
+        print(args)
+        if os.path.exists('./checkpoint') is False:
+            os.mkdir('./checkpoint')
+
+    # data loading
+    root = args.data_dir
+    train_dir = os.path.join(root, "train")
+    test_dir = os.path.join(root, "test")
+    transform_train = torchvision.transforms.Compose([
+        torchvision.transforms.RandomCrop((128, 64), padding=4),
+        torchvision.transforms.RandomHorizontalFlip(),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+    transform_test = torchvision.transforms.Compose([
+        torchvision.transforms.Resize((128, 64)),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+    train_dataset = torchvision.datasets.ImageFolder(train_dir, transform=transform_train)
+    test_dataset = torchvision.datasets.ImageFolder(test_dir, transform=transform_test)
+
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+    test_sampler = torch.utils.data.distributed.DistributedSampler(test_dataset)
+
+    train_batch_sampler = torch.utils.data.BatchSampler(train_sampler, batch_size, drop_last=True)
+
+    number_workers = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])
+
+    if rank == 0:
+        print('Using {} dataloader workers every process'.format(number_workers))
+
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_sampler=train_batch_sampler,
+        pin_memory=True,
+        shuffle=True,
+        num_workers=number_workers
+    )
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset,
+        sampler=test_sampler,
+        batch_size=batch_size,
+        pin_memory=True,
+        num_workers=number_workers,
+        shuffle=False
+    )
+
+    num_classes = max(len(train_loader.dataset.classes), len(test_loader.dataset.classes))
+
+    # net definition
+    start_epoch = 0
+    net = Net(num_classes=num_classes)
+    if args.weights:
+        warnings.warn("better providing pretraining weights")
+        print('Loading from ', args.weights)
+        checkpoint = torch.load(args.weights)
+        net_dict = checkpoint if 'net_dict' not in checkpoint else checkpoint['net_dict']
+        net.load_state_dict(net_dict)
+        best_acc = checkpoint['acc']
+        start_epoch = checkpoint['epoch']
+    else:
+        checkpoint_path = os.path.join(tempfile.gettempdir(), 'initial_weights.pth')
+        if rank == 0:
+            torch.save(net.state_dict(), checkpoint_path)
+
+        dist.barrier()
+        net.load_state_dict(torch.load(checkpoint_path, map_location=device))
 
 
-def main():
-    for epoch in range(start_epoch, start_epoch + 40):
-        train_loss, train_err = train(epoch)
-        test_loss, test_err = test(epoch)
-        draw_curve(epoch, train_loss, train_err, test_loss, test_err)
-        if (epoch + 1) % 20 == 0:
-            lr_decay()
+    net.to(device)
+
+    if args.freeze_layers:
+        for name, param in net.named_parameters():
+            if 'fc' not in name:
+                param.requires_grad = False
+    else:
+        if args.syncBN:
+            net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net).to(device)
+
+    net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[args.gpu])
+
+    # loss and optimizer
+    pg = [p for p in net.parameters() if p.requires_grad]
+    optimizer = torch.optim.SGD(pg, args.lr, momentum=0.9, weight_decay=5e-4)
+
+    lr = lambda x: ((1 + math.cos(x * math.pi / args.epochs)) / 2) * (1 - args.lrf) + args.lrf
+    scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lr)
+    for epoch in range(start_epoch, start_epoch + args.epochs):
+        train_loss = train_one_epoch(net, optimizer, train_loader, device, epoch)
+        scheduler.step()
+
+        sum_num = evaluate(net, test_loader, device)
+        acc = sum_num / len(test_dataset)
+
+        if rank == 0:
+            print('[epoch {}] accuracy: {}'.format(epoch, acc.item()))
+
+            state_dict = {
+                'net_dict': net.state_dict(),
+                'acc': acc,
+                'epoch': epoch
+            }
+            torch.save(state_dict, './checkpoint/model_{}.pth'.format(epoch))
+
+    if rank == 0:
+        if os.path.exists(checkpoint_path) is True:
+            os.remove(checkpoint_path)
+    cleanup()
+
+        # draw_curve(epoch, train_loss, train_err, test_loss, test_err)
+
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description="Train on market1501")
+    parser.add_argument("--data-dir", default='data', type=str)
+    parser.add_argument('--epochs', type=int, default=40)
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument("--lr", default=0.1, type=float)
+    parser.add_argument('--lrf', default=0.001, type=float)
+    parser.add_argument('--syncBN', type=bool, default=True)
+
+    parser.add_argument('--weights', type=str, default='./checkpoint/ckpt.t7')
+    parser.add_argument('--freeze_layers', type=bool, default=False)
+
+    # not change the following parameters, the system will automatically assignment
+    parser.add_argument('--device', default='cuda', help='device id (i.e. 0 or 0, 1 or cpu)')
+    parser.add_argument('--world_size', default=4, type=int, help='number of distributed processes')
+    parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
+    args = parser.parse_args()
+
+    main(args)
