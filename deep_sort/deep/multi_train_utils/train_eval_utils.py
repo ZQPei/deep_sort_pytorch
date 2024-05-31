@@ -49,8 +49,8 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
 @torch.no_grad()
 def evaluate(model, data_loader, device):
     model.eval()
-    test_loss = torch.zeros(1).to(device)
     criterion = torch.nn.CrossEntropyLoss()
+    test_loss = torch.zeros(1).to(device)
     sum_num = torch.zeros(1).to(device)
     if is_main_process():
         data_loader = tqdm(data_loader, file=sys.stdout)
