@@ -153,7 +153,7 @@ def main(args):
             print('[epoch {}] accuracy: {}'.format(epoch, test_acc.item()))
 
             state_dict = {
-                'net_dict': net.state_dict(),
+                'net_dict': net.module.state_dict(),
                 'acc': test_acc,
                 'epoch': epoch
             }
