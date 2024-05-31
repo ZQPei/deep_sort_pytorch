@@ -10,7 +10,8 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
     print("\nEpoch : %d" % (epoch + 1))
     model.train()
     criterion = torch.nn.CrossEntropyLoss()
-    training_loss = torch.zeros(1).to(device)
+    mean_loss = torch.zeros(1).to(device)
+    sum_num = torch.zeros(1).to(device)
     optimizer.zero_grad()
 
     if is_main_process():
@@ -26,6 +27,8 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
         loss.backward()
         loss = reduce_value(loss, average=True)
         mean_loss = (mean_loss * idx + loss.detach()) / (idx + 1)
+        pred = torch.max(outputs, dim=1)[1]
+        sum_num += torch.eq(pred, labels).sum()
 
         if is_main_process():
             data_loader.desc = '[epoch {}] mean loss {}'.format(epoch, mean_loss.item())
@@ -38,24 +41,33 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
         optimizer.zero_grad()
     if device != torch.device('cpu'):
         torch.cuda.synchronize(device)
+    sum_num = reduce_value(sum_num, average=False)
 
-    return mean_loss.item()
+    return sum_num.item(), mean_loss.item()
+
 
 @torch.no_grad()
 def evaluate(model, data_loader, device):
     model.eval()
+    test_loss = torch.zeros(1).to(device)
+    criterion = torch.nn.CrossEntropyLoss()
     sum_num = torch.zeros(1).to(device)
     if is_main_process():
         data_loader = tqdm(data_loader, file=sys.stdout)
+
     for idx, (inputs, labels) in enumerate(data_loader):
         inputs, labels = inputs.to(device), labels.to(device)
         outputs = model(inputs)
-        pred = torch.max(pred, dim=1)[1]
-        sum_num += torch.eq(pred, labels.to(device)).sum()
+        loss = criterion(outputs, labels)
+        loss = reduce_value(loss, average=True)
+
+        test_loss = (test_loss * idx + loss.detach()) / (idx + 1)
+        pred = torch.max(outputs, dim=1)[1]
+        sum_num += torch.eq(pred, labels).sum()
 
     if device != torch.device('cpu'):
         torch.cuda.synchronize(device)
 
     sum_num = reduce_value(sum_num, average=False)
 
-    return sum_num.item()
+    return sum_num.item(), test_loss.item()

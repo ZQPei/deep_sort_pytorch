@@ -16,10 +16,6 @@ import torch.distributed as dist
 from model import Net
 from resnet import resnet18
 
-
-
-
-
 # plot figure
 x_epoch = []
 record = {'train_loss': [], 'train_err': [], 'test_loss': [], 'test_err': []}
@@ -44,7 +40,6 @@ def draw_curve(epoch, train_loss, train_err, test_loss, test_err):
         ax0.legend()
         ax1.legend()
     fig.savefig("train.jpg")
-
 
 
 def main(args):
@@ -128,7 +123,6 @@ def main(args):
         dist.barrier()
         net.load_state_dict(torch.load(checkpoint_path, map_location=device))
 
-
     net.to(device)
 
     if args.freeze_layers:
@@ -148,28 +142,29 @@ def main(args):
     lr = lambda x: ((1 + math.cos(x * math.pi / args.epochs)) / 2) * (1 - args.lrf) + args.lrf
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lr)
     for epoch in range(start_epoch, start_epoch + args.epochs):
-        train_loss = train_one_epoch(net, optimizer, train_loader, device, epoch)
+        train_pos, train_loss = train_one_epoch(net, optimizer, train_loader, device, epoch)
+        train_acc = train_pos / len(train_dataset)
         scheduler.step()
 
-        sum_num = evaluate(net, test_loader, device)
-        acc = sum_num / len(test_dataset)
+        test_pos, test_loss = evaluate(net, test_loader, device)
+        test_acc = test_pos / len(test_dataset)
 
         if rank == 0:
             print('[epoch {}] accuracy: {}'.format(epoch, acc.item()))
 
             state_dict = {
                 'net_dict': net.state_dict(),
-                'acc': acc,
+                'acc': test_acc,
                 'epoch': epoch
             }
             torch.save(state_dict, './checkpoint/model_{}.pth'.format(epoch))
+        draw_curve(epoch, train_loss, 1 - train_acc, test_loss, 1 - test_acc)
 
     if rank == 0:
         if os.path.exists(checkpoint_path) is True:
             os.remove(checkpoint_path)
     cleanup()
 
-        # draw_curve(epoch, train_loss, train_err, test_loss, test_err)
 
 
 
