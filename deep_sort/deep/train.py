@@ -108,7 +108,6 @@ def main(args):
     start_epoch = 0
     net = Net(num_classes=num_classes)
     if args.weights:
-        warnings.warn("better providing pretraining weights")
         print('Loading from ', args.weights)
         checkpoint = torch.load(args.weights)
         net_dict = checkpoint if 'net_dict' not in checkpoint else checkpoint['net_dict']
@@ -116,6 +115,7 @@ def main(args):
         best_acc = checkpoint['acc']
         start_epoch = checkpoint['epoch']
     else:
+        warnings.warn("better providing pretraining weights")
         checkpoint_path = os.path.join(tempfile.gettempdir(), 'initial_weights.pth')
         if rank == 0:
             torch.save(net.state_dict(), checkpoint_path)
@@ -142,12 +142,12 @@ def main(args):
     lr = lambda x: ((1 + math.cos(x * math.pi / args.epochs)) / 2) * (1 - args.lrf) + args.lrf
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lr)
     for epoch in range(start_epoch, start_epoch + args.epochs):
-        train_pos, train_loss = train_one_epoch(net, optimizer, train_loader, device, epoch)
-        train_acc = train_pos / len(train_dataset)
+        train_positive, train_loss = train_one_epoch(net, optimizer, train_loader, device, epoch)
+        train_acc = train_positive / len(train_dataset)
         scheduler.step()
 
-        test_pos, test_loss = evaluate(net, test_loader, device)
-        test_acc = test_pos / len(test_dataset)
+        test_positive, test_loss = evaluate(net, test_loader, device)
+        test_acc = test_positive / len(test_dataset)
 
         if rank == 0:
             print('[epoch {}] accuracy: {}'.format(epoch, test_acc.item()))
