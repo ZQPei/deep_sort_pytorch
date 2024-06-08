@@ -3,11 +3,28 @@ import sys
 from tqdm import tqdm
 import torch
 
-from distributed_utils import reduce_value, is_main_process
+from .distributed_utils import reduce_value, is_main_process
+
+
+def load_model(state_dict, model_state_dict, model):
+    for k in state_dict:
+        if k in model_state_dict:
+            if state_dict[k].shape != model_state_dict[k].shape:
+                print('Skip loading parameter {}, required shape {}, ' \
+                      'loaded shape {}.'.format(
+                    k, model_state_dict[k].shape, state_dict[k].shape))
+                state_dict[k] = model_state_dict[k]
+        else:
+            print('Drop parameter {}.'.format(k))
+    for k in model_state_dict:
+        if not (k in state_dict):
+            print('No param {}.'.format(k))
+            state_dict[k] = model_state_dict[k]
+    model.load_state_dict(state_dict, strict=False)
+    return model
 
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch):
-    print("\nEpoch : %d" % (epoch + 1))
     model.train()
     criterion = torch.nn.CrossEntropyLoss()
     mean_loss = torch.zeros(1).to(device)
@@ -41,7 +58,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
         optimizer.zero_grad()
     if device != torch.device('cpu'):
         torch.cuda.synchronize(device)
-    sum_num = reduce_value(sum_num, average=True)
+    sum_num = reduce_value(sum_num, average=False)
 
     return sum_num.item(), mean_loss.item()
 
@@ -68,6 +85,6 @@ def evaluate(model, data_loader, device):
     if device != torch.device('cpu'):
         torch.cuda.synchronize(device)
 
-    sum_num = reduce_value(sum_num, average=True)
+    sum_num = reduce_value(sum_num, average=False)
 
     return sum_num.item(), test_loss.item()
