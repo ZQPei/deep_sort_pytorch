@@ -38,13 +38,13 @@ Assuming you have already prepare the dataset. Then you can use the following co
 
 ```python
 usage: train.py [--data-dir]
-    			[--epochs]
-        		[--batch_size]
-				[--lr]
-				[--lrf]
-				[--weights]
-				[--freeze_layers]
-				[--gpu_id]
+                [--epochs]
+                [--batch_size]
+                [--lr]
+                [--lrf]
+                [--weights]
+                [--freeze_layers]
+                [--gpu_id]
 
 # default use cuda:0
 python train.py --data-dir [dataset/root/path] --weights [(optional)pre-train/weight/path]
