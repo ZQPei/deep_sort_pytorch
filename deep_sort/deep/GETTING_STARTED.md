@@ -38,8 +38,8 @@ Assuming you have already prepare the dataset. Then you can use the following co
 
 ```python
 usage: train.py [--data-dir]
-				[--epochs]
-				[--batch_size]
+    			[--epochs]
+        		[--batch_size]
 				[--lr]
 				[--lrf]
 				[--weights]
