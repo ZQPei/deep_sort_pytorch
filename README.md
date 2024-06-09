@@ -25,7 +25,7 @@ Futher improvement direction
 
 - Added resnet network to the appearance feature extraction network in the deep folder
 
-- Modified the NMS bug in the preprocessing.py and the updated covariance calculation bug in the kalmen_filter.py in the sort folder
+- Fixed the NMS bug in the `preprocessing.py` and also fixed covariance calculation bug in the `kalmen_filter.py` in the sort folder
 
 ### detecting
 
@@ -41,7 +41,7 @@ Futher improvement direction
 
 ### segmentation
 
-* Added Mask RCNN instance segmentation model. Codes references this repo: [mask_rcnn](https://github.com/WZMIAOMIAO/deep-learning-for-image-processing/tree/master/pytorch_object_detection/mask_rcnn).
+* Added Mask RCNN instance segmentation model. Codes references this repo: [mask_rcnn](https://github.com/WZMIAOMIAO/deep-learning-for-image-processing/tree/master/pytorch_object_detection/mask_rcnn). Visual result saved in `demo/demo2.gif`.
 * Similar to YOLOv5, `train.py`, `validation.py` and `predict.py` were deleted. This repo only need **maskrcnn_resnet50_fpn_coco.pth**.
 
 ### deepsort
@@ -110,9 +110,9 @@ wget https://github.com/ultralytics/yolov5/releases/download/v6.1/yolov5m.pt
 cd ../../
 
 # if you use Mask RCNN as detector in this repo
-cd detector/Mask_RCNN
+cd detector/Mask_RCNN/save_weights
 wget https://download.pytorch.org/models/maskrcnn_resnet50_fpn_coco-bf2d0c1e.pth
-cd ../../
+cd ../../../
 ```
 
 3. Download deepsort feature extraction networks weight
