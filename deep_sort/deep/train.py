@@ -141,7 +141,6 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument("--lr", default=0.001, type=float)
     parser.add_argument('--lrf', default=0.1, type=float)
-    parser.add_argument('--syncBN', type=bool, default=True)
 
     parser.add_argument('--weights', type=str, default='./checkpoint/resnet18.pth')
     parser.add_argument('--freeze-layers', action='store_true')
