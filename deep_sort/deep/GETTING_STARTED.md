@@ -43,11 +43,14 @@ usage: train.py [--data-dir]
                 [--lr]
                 [--lrf]
                 [--weights]
-                [--freeze_layers]
+                [--freeze-layers]
                 [--gpu_id]
 
 # default use cuda:0
+# default use Net in `model.py`
 python train.py --data-dir [dataset/root/path] --weights [(optional)pre-train/weight/path]
+# you use `--freeze-layers` option to freeze full convolutional layer parameters except fc layers parameters
+python train.py --data-dir [dataset/root/path] --weights [(optional)pre-train/weight/path] --freeze-layers
 ```
 
 #### training on multiple GPU
@@ -60,14 +63,17 @@ usage: train_multiGPU.py [--data-dir]
                          [--lrf]
                          [--syncBN]
                          [--weights]
-                         [--freeze_layers]
+                         [--freeze-layers]
                          # not change the following parameters, the system will automatically assignment
                          [--device]
                          [--world_size]
                          [--dist_url]
                          
 # default use cuda:0, cuda:1, cuda:2, cuda:3
+# default use resnet18 in `resnet.py`
 CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 train_multiGPU.py --data-dir [dataset/root/path] --weights [(optional)pre-train/weight/path] 
+# you use `--freeze-layers` option to freeze full convolutional layer parameters except fc layers parameters
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 train_multiGPU.py --data-dir [dataset/root/path] --weights [(optional)pre-train/weight/path] --freeze-layers
 ```
 
 An example of training progress is as follows:
