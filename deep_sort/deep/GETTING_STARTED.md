@@ -1,4 +1,4 @@
-In deepsort algorithm, appearance feature extraction network used to extract features from **image_crops** for matching purpose.The original model used in paper is in ```model.py```, and its parameter here [ckpt.t7](https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6). This repository also provides a ```resnet.py``` script and its pre-training weights on Imagenet here.
+In deepsort algorithm, appearance feature extraction network used to extract features from **image_crops** for matching purpose.The original model used in paper is in `model.py`, and its parameter here [ckpt.t7](https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6). This repository also provides a `resnet.py` script and its pre-training weights on Imagenet here.
 
 ```
 # resnet18
@@ -46,10 +46,9 @@ usage: train.py [--data-dir]
                 [--freeze-layers]
                 [--gpu_id]
 
-# default use cuda:0
-# default use Net in `model.py`
+# default use cuda:0, use Net in `model.py`
 python train.py --data-dir [dataset/root/path] --weights [(optional)pre-train/weight/path]
-# you use `--freeze-layers` option to freeze full convolutional layer parameters except fc layers parameters
+# you can use `--freeze-layers` option to freeze full convolutional layer parameters except fc layers parameters
 python train.py --data-dir [dataset/root/path] --weights [(optional)pre-train/weight/path] --freeze-layers
 ```
 
@@ -69,10 +68,9 @@ usage: train_multiGPU.py [--data-dir]
                          [--world_size]
                          [--dist_url]
                          
-# default use cuda:0, cuda:1, cuda:2, cuda:3
-# default use resnet18 in `resnet.py`
+# default use cuda:0, cuda:1, cuda:2, cuda:3, use resnet18 in `resnet.py`
 CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 train_multiGPU.py --data-dir [dataset/root/path] --weights [(optional)pre-train/weight/path] 
-# you use `--freeze-layers` option to freeze full convolutional layer parameters except fc layers parameters
+# you can use `--freeze-layers` option to freeze full convolutional layer parameters except fc layers parameters
 CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 train_multiGPU.py --data-dir [dataset/root/path] --weights [(optional)pre-train/weight/path] --freeze-layers
 ```
 
