@@ -29,7 +29,7 @@ Futher improvement direction
 
 ### detecting
 
-- Added YOLOv5 detector, aligned interface, and added YOLOv5 related yaml configuration files. Codes references this repo: [YOLOv5-v6.1]([ultralytics/yolov5 at v6.1 (github.com)](https://github.com/ultralytics/yolov5/tree/v6.1)).
+- Added YOLOv5 detector, aligned interface, and added YOLOv5 related yaml configuration files. Codes references this repo: [YOLOv5-v6.1](https://github.com/ultralytics/yolov5/tree/v6.1).
 
 - The `train.py`, `val.py` and `detect.py` in the original YOLOv5 were deleted. This repo only need **yolov5x.pt**.
 
