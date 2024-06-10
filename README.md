@@ -229,7 +229,7 @@ Check [GETTING_STARTED.md](deep_sort/deep/GETTING_STARTED.md) to start training 
 - code: [nwojke/deep_sort](https://github.com/nwojke/deep_sort)
 - paper: [YOLOv3: An Incremental Improvement](https://pjreddie.com/media/files/papers/YOLOv3.pdf)
 - code: [Joseph Redmon/yolov3](https://pjreddie.com/darknet/yolo/)
-- paper: [Mask R-CNN]([arxiv.org/pdf/1703.06870](https://arxiv.org/pdf/1703.06870))
+- paper: [Mask R-CNN](https://arxiv.org/pdf/1703.06870)
 - code: [WZMIAOMIAO/Mask R-CNN](https://github.com/WZMIAOMIAO/deep-learning-for-image-processing/tree/master/pytorch_object_detection/mask_rcnn)
 - paper: [YOLOv5](https://github.com/ultralytics/yolov5)
 - code: [ultralytics/yolov5](https://github.com/ultralytics/yolov5/tree/v6.1)
