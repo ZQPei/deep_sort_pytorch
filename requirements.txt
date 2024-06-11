@@ -48,7 +48,5 @@ matplotlib~=3.7.2
 seaborn~=0.11.2
 requests~=2.31.0
 thop~=0.1.1.post2209072238
-tensorflow~=2.7.0
-tensorflow-gpu~=2.7.0
 pycocotools~=2.0.6
 python-dotenv~=0.21.0
