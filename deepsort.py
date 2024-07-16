@@ -148,7 +148,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--VIDEO_PATH", type=str, default='demo.avi')
     parser.add_argument("--config_mmdetection", type=str, default="./configs/mmdet.yaml")
-    parser.add_argument("--config_detection", type=str, default="./configs/mask_rcnn.yaml")
+    parser.add_argument("--config_detection", type=str, default="./configs/yolov5m.yaml")
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
     parser.add_argument("--config_fastreid", type=str, default="./configs/fastreid.yaml")
     parser.add_argument("--fastreid", action="store_true")
